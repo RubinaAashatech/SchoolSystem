@@ -30,5 +30,5 @@
         </div>
     </div>
 </div>
-
+<button type="button" class="btn btn-warning btn-sm reset-password-btn" data-id="{{ $school->id }}">Reset</button>
 @endcan
