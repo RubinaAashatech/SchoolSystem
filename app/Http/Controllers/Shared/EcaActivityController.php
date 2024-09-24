@@ -14,6 +14,7 @@ use App\Models\Student;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class EcaActivityController extends Controller
 {
@@ -129,24 +130,45 @@ class EcaActivityController extends Controller
     }
 
     public function getEcaActivities(Request $request)
-    {
-        if ($request->ajax()) {
-            $data = EcaActivity::with('ecaHead')->get();
-            return Datatables::of($data)
-                ->addColumn('actions', function($row){
-                    $btn = '<a href="javascript:void(0)" class="edit-eca-activity btn btn-warning btn-sm" data-id="'.$row->id.'" data-title="'.$row->title.'" data-description="'.$row->description.'" data-player_type="'.$row->player_type.'" data-is_active="'.$row->is_active.'" data-eca_head_id="'.$row->eca_head_id.'">Edit</a>';
+{
+    if ($request->ajax()) {
+        // Assuming the current school_id is stored in session or can be retrieved from authenticated user
+        $school_id = auth()->user()->school_id;
+
+        $data = EcaActivity::with('ecaHead')->get();
+
+        return Datatables::of($data)
+            ->addColumn('actions', function($row) use ($school_id) {
+                // Check if the school has already participated in this ECA activity
+                $alreadyParticipated = DB::table('eca_activity_school')
+                    ->where('eca_activity_id', $row->id)
+                    ->where('school_id', $school_id)
+                    ->exists();
+
+                // Create buttons
+                $btn = '<a href="javascript:void(0)" class="edit-eca-activity btn btn-warning btn-sm" data-id="'.$row->id.'" data-title="'.$row->title.'" data-description="'.$row->description.'" data-player_type="'.$row->player_type.'" data-is_active="'.$row->is_active.'" data-eca_head_id="'.$row->eca_head_id.'">Edit</a>';
+
+                if ($alreadyParticipated) {
+                    // Disable participate button if already participated
+                    $btn .= ' <button class="btn btn-info btn-sm" disabled>Participated</button>';
+                } else {
                     $btn .= ' <a href="javascript:void(0)" class="participate-eca-activity btn btn-info btn-sm" data-id="'.$row->id.'">Participate</a>';
-                    $btn .= ' <form action="'.route('admin.eca_activities.destroy', $row->id).'" method="POST" style="display:inline-block;">';
-                    $btn .= csrf_field();
-                    $btn .= method_field('DELETE');
-                    $btn .= ' <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm(\'Are you sure?\')">Delete</button>';
-                    $btn .= '</form>';
-                    return $btn;
-                })
-                ->rawColumns(['actions'])
-                ->make(true);
-        }
+                }
+
+                // Delete button
+                $btn .= ' <form action="'.route('admin.eca_activities.destroy', $row->id).'" method="POST" style="display:inline-block;">';
+                $btn .= csrf_field();
+                $btn .= method_field('DELETE');
+                $btn .= ' <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm(\'Are you sure?\')">Delete</button>';
+                $btn .= '</form>';
+
+                return $btn;
+            })
+            ->rawColumns(['actions'])
+            ->make(true);
     }
+}
+
 
         public function getClasses(Request $request)
     {
