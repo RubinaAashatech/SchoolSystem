@@ -83,6 +83,11 @@ class School extends Model
     {
         return $this->belongsToMany(EcaActivity::class, 'eca_activity_school');
     }
+
+    public function isSelectedForActivity()
+{
+    return $this->activities()->where('id', $this->pivot->activity_id)->exists();
+}
 }
 
 

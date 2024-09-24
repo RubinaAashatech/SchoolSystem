@@ -49,45 +49,49 @@ class EcaActivityController extends Controller
     return view('backend.shared.extraactivities.index', compact('page_title', 'ecaHeads', 'schools', 'classes', 'sections', 'user_type', 'students'));
 }
 
-    public function store(Request $request)
-    {
-        $user_type = $this->getUserType();
-        
-        $validationRules = [
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'player_type' => 'required|in:single,multi',
-            'is_active' => 'required|boolean',
-            'eca_head_id' => 'required|exists:extra_curricular_heads,id',
-            'pdf_image' => 'nullable|mimes:pdf,jpeg,png,jpg|max:2048',
-        ];
+public function store(Request $request)
+{
+    Log::info('Received player_type: ' . $request->input('player_type'));
+    $user_type = $this->getUserType();
+    
+    $validationRules = [
+        'title' => 'required|string|max:255',
+        'description' => 'required|string',
+        'player_type' => 'required|in:single,multi,competitive',
+        'is_active' => 'required|boolean',
+        'eca_head_id' => 'required|exists:extra_curricular_heads,id',
+        'pdf_image' => 'nullable|mimes:pdf,jpeg,png,jpg|max:2048',
+    ];
 
-        if ($user_type === 'municipality') {
-            $validationRules['school_ids'] = 'required|array';
-            $validationRules['school_ids.*'] = 'exists:schools,id';
-        } elseif ($user_type === 'school_admin') {
-            $validationRules['class_ids'] = 'required|array';
-            $validationRules['class_ids.*'] = 'exists:classes,id';
-        }
-
-        $request->validate($validationRules);
-
-        $data = $request->all();
-        if ($request->hasFile('pdf_image')) {
-            $data['pdf_image'] = $request->file('pdf_image')->store('pdf_images');
-        }
-
-        $ecaActivity = EcaActivity::create($data);
-
-        if ($user_type === 'municipality') {
-            $ecaActivity->schools()->sync($request->school_ids);
-        } elseif ($user_type === 'school_admin') {
-            $ecaActivity->schools()->sync([Auth::user()->school_id]);
-            $ecaActivity->classes()->sync($request->class_ids);
-        }
-
-        return redirect()->route('admin.eca_activities.index')->with('success', 'ECA Activity created successfully.');
+    if ($user_type === 'municipality') {
+        $validationRules['school_ids'] = 'required|array';
+        $validationRules['school_ids.*'] = 'exists:schools,id';
+    } elseif ($user_type === 'school_admin') {
+        $validationRules['class_ids'] = 'required|array';
+        $validationRules['class_ids.*'] = 'exists:classes,id';
     }
+
+    $request->validate($validationRules);
+
+    $data = $request->all();
+    if ($request->hasFile('pdf_image')) {
+        $data['pdf_image'] = $request->file('pdf_image')->store('pdf_images');
+    }
+
+    // Add the created_by field with the current user's ID
+    $data['created_by'] = Auth::id();
+
+    $ecaActivity = EcaActivity::create($data);
+
+    if ($user_type === 'municipality') {
+        $ecaActivity->schools()->sync($request->school_ids);
+    } elseif ($user_type === 'school_admin') {
+        $ecaActivity->schools()->sync([Auth::user()->school_id]);
+        $ecaActivity->classes()->sync($request->class_ids);
+    }
+
+    return redirect()->route('admin.eca_activities.index')->with('success', 'ECA Activity created successfully.');
+}
 
     public function update(Request $request, EcaActivity $ecaActivity)
     {
@@ -96,11 +100,12 @@ class EcaActivityController extends Controller
         $validationRules = [
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'player_type' => 'required|in:single,multi',
+            'player_type' => 'required|in:single,multi,competitive',
             'is_active' => 'required|boolean',
             'eca_head_id' => 'required|exists:extra_curricular_heads,id',
             'pdf_image' => 'nullable|mimes:pdf,jpeg,png,jpg|max:2048',
         ];
+
 
         if ($user_type === 'municipality') {
             $validationRules['school_ids'] = 'required|array';
@@ -131,44 +136,68 @@ class EcaActivityController extends Controller
 
     public function getEcaActivities(Request $request)
 {
-    if ($request->ajax()) {
-        // Assuming the current school_id is stored in session or can be retrieved from authenticated user
-        $school_id = auth()->user()->school_id;
+    try {
+        if ($request->ajax()) {
+            $user = auth()->user();
+            $school_id = $user->school_id;
+            $user_type = $this->getUserType();
 
-        $data = EcaActivity::with('ecaHead')->get();
+            if ($user_type === 'municipality') {
+                $data = EcaActivity::with('ecaHead')
+                    ->where('created_by', auth()->id())
+                    ->get();
+            } else {
+                $data = EcaActivity::with('ecaHead')
+                    ->where(function($query) use ($school_id) {
+                        $query->whereHas('schools', function($q) use ($school_id) {
+                            $q->where('schools.id', $school_id);
+                        })
+                        ->orWhere('created_by', auth()->id());
+                    })
+                    ->get();
+            }
 
-        return Datatables::of($data)
-            ->addColumn('actions', function($row) use ($school_id) {
-                // Check if the school has already participated in this ECA activity
-                $alreadyParticipated = DB::table('eca_activity_school')
-                    ->where('eca_activity_id', $row->id)
-                    ->where('school_id', $school_id)
-                    ->exists();
+            return Datatables::of($data)
+                ->addColumn('actions', function($row) use ($school_id, $user_type) {
+                    $btn = '';
 
-                // Create buttons
-                $btn = '<a href="javascript:void(0)" class="edit-eca-activity btn btn-warning btn-sm" data-id="'.$row->id.'" data-title="'.$row->title.'" data-description="'.$row->description.'" data-player_type="'.$row->player_type.'" data-is_active="'.$row->is_active.'" data-eca_head_id="'.$row->eca_head_id.'">Edit</a>';
+                    if ($row->created_by == auth()->id()) {
+                        $btn .= '<a href="javascript:void(0)" class="edit-eca-activity btn btn-warning btn-sm" data-id="'.$row->id.'" data-title="'.$row->title.'" data-description="'.$row->description.'" data-player_type="'.$row->player_type.'" data-is_active="'.$row->is_active.'" data-eca_head_id="'.$row->eca_head_id.'">Edit</a>';
+                    }
 
-                if ($alreadyParticipated) {
-                    // Disable participate button if already participated
-                    $btn .= ' <button class="btn btn-info btn-sm" disabled>Participated</button>';
-                } else {
-                    $btn .= ' <a href="javascript:void(0)" class="participate-eca-activity btn btn-info btn-sm" data-id="'.$row->id.'">Participate</a>';
-                }
+                    $alreadyParticipated = DB::table('eca_participations')
+                        ->where('eca_activity_id', $row->id)
+                        ->where('school_id', $school_id)
+                        ->exists();
 
-                // Delete button
-                $btn .= ' <form action="'.route('admin.eca_activities.destroy', $row->id).'" method="POST" style="display:inline-block;">';
-                $btn .= csrf_field();
-                $btn .= method_field('DELETE');
-                $btn .= ' <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm(\'Are you sure?\')">Delete</button>';
-                $btn .= '</form>';
+                    if ($user_type !== 'municipality') {
+                        if ($alreadyParticipated) {
+                            $btn .= ' <button class="btn btn-info btn-sm" disabled style="margin-left: 5px;">Participated</button>';
+                        } else {
+                            $btn .= ' <a href="javascript:void(0)" class="participate-eca-activity btn btn-info btn-sm" style="margin-left: 5px;" data-id="'.$row->id.'">Participate</a>';
+                        }
+                    }
 
-                return $btn;
-            })
-            ->rawColumns(['actions'])
-            ->make(true);
+                    if ($row->created_by == auth()->id()) {
+                        $btn .= '<span style="margin-left: 5px;">';
+                        $btn .= '<form action="'.route('admin.eca_activities.destroy', $row->id).'" method="POST" style="display:inline-block;">';
+                        $btn .= csrf_field();
+                        $btn .= method_field('DELETE');
+                        $btn .= '<button type="submit" class="btn btn-danger btn-sm" onclick="return confirm(\'Are you sure?\')">Delete</button>';
+                        $btn .= '</form>';
+                        $btn .= '</span>';
+                    }
+
+                    return $btn;
+                })
+                ->rawColumns(['actions'])
+                ->make(true);
+        }
+    } catch (\Exception $e) {
+        Log::error('Error in getEcaActivities: ' . $e->getMessage());
+        return response()->json(['error' => 'An error occurred while fetching data.'], 500);
     }
 }
-
 
         public function getClasses(Request $request)
     {
@@ -248,5 +277,40 @@ class EcaActivityController extends Controller
         return redirect()->route('admin.eca_activities.index')
             ->with('success', 'Participation recorded successfully for ' . count($request->participant_name) . ' students.');
     }
+
+    public function getClassesForActivity(Request $request)
+{
+    $activityId = $request->input('activity_id');
+
+    // Assuming you have a model structure to fetch the related classes
+    $classes = Classg::whereHas('activities', function($query) use ($activityId) {
+        $query->where('activity_id', $activityId);
+    })->get()->map(function($class) {
+        return [
+            'id' => $class->id,
+            'class_name' => $class->name,
+            'selected' => $class->isSelectedForActivity(),
+        ];
+    });
+
+    return response()->json(['classes' => $classes]);
+}
+
+public function getSchoolsForActivity(Request $request)
+{
+    $activityId = $request->input('activity_id');
+    $schools = School::whereHas('activities', function($query) use ($activityId) {
+        $query->where('activity_id', $activityId);
+    })->get()->map(function($school) {
+        return [
+            'id' => $school->id,
+            'school_name' => $school->name,
+            'selected' => $school->isSelectedForActivity(), 
+        ];
+    });
+
+    return response()->json(['schools' => $schools]);
+}
+
     
 }

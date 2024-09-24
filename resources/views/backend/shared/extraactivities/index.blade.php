@@ -174,10 +174,10 @@
                         <div class="p-2 input-label">
                             <label>Player Type<span class="must">*</span></label>
                             <div class="single-input-modal">
-                                <select name="player_type" class="input-text single-input-text" id="dynamic_player_type"
-                                    required>
+                                <select name="player_type" class="input-text single-input-text" id="dynamic_player_type" required>
                                     <option value="single">Single Player</option>
                                     <option value="multi">Multi Player</option>
+                                    <option value="competitive">Competitive</option>
                                 </select>
                             </div>
                         </div>
@@ -241,7 +241,11 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
-
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
     var userType = '{{ $user_type }}';
 
     if (userType === 'municipality') {
@@ -254,11 +258,13 @@ $(document).ready(function() {
         });
     }
 
+
+    // Form submission
     $('#ecaActivityForm').submit(function(e) {
         e.preventDefault();
         var formData = new FormData(this);
         
-        if (userType === 'school_Admin') {
+        if (userType === 'school_admin') {
             formData.delete('school_ids[]');
             formData.append('school_id', '{{ auth()->user()->school_id }}');
         }
@@ -278,19 +284,19 @@ $(document).ready(function() {
             }
         });
     });
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
     
-
+    // DataTable initialization
     $('#eca-activities-table').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
             url: '{{ route("admin.eca_activities.get") }}',
-            type: 'POST'
+            type: 'POST',
+            error: function (xhr, error, thrown) {
+                console.log('DataTables error: ', error);
+                console.log('Exception: ', thrown);
+                console.log('Response: ', xhr.responseText);
+            }
         },
         columns: [
             { data: 'id', name: 'id' },
@@ -299,9 +305,65 @@ $(document).ready(function() {
             { data: 'player_type', name: 'player_type' },
             { data: 'is_active', name: 'is_active' },
             { data: 'eca_head.name', name: 'eca_head.name' },
-            { data: 'actions', name: 'actions' }
+            { data: 'actions', name: 'actions', orderable: false, searchable: false }
         ]
     });
+
+    $(document).on('click', '.edit-eca-activity', function() {
+        var id = $(this).data('id');
+        var title = $(this).data('title');
+        var description = $(this).data('description');
+        var player_type = $(this).data('player_type');
+        var is_active = $(this).data('is_active');
+        var eca_head_id = $(this).data('eca_head_id');
+
+        $('#dynamic_id').val(id);
+        $('#dynamic_title').val(title);
+        $('#dynamic_description').val(description);
+        $('#dynamic_player_type').val(player_type);
+        $('#dynamic_eca_head_id').val(eca_head_id);
+
+        $('input[name="is_active"]').prop('checked', false);
+        $('input[name="is_active"][value="' + is_active + '"]').prop('checked', true);
+
+        $('#ecaActivityForm').attr('action', '{{ route('admin.eca_activities.update', '') }}' + '/' + id);
+        $('#methodField').val('PUT');
+
+        // Fetch and populate schools or classes
+        if (userType === 'municipality') {
+            fetchSchools(id);
+        } else if (userType === 'school_admin') {
+            fetchClasses(id);
+        }
+
+        $('#createEcaActivity').modal('show');
+
+        return false;
+    });
+
+
+
+
+    function fetchSchools(activityId) {
+        $.ajax({
+            url: '/admin/eca_activities/get-schools/' + activityId,
+            type: 'GET',
+            success: function(response) {
+                var schoolSelect = $('#dynamic_school_ids');
+                schoolSelect.empty();
+                $.each(response.schools, function(index, school) {
+                    var option = $('<option></option>').val(school.id).text(school.school_name);
+                    if (school.selected) {
+                        option.prop('selected', true);
+                    }
+                    schoolSelect.append(option);
+                });
+            },
+            error: function(xhr, status, error) {
+                console.error("Error fetching schools:", error);
+            }
+        });
+    }
 
     $(document).on('click', '.participate-eca-activity', function () {
         var ecaActivityId = $(this).data('id');
@@ -417,6 +479,36 @@ $('#section_id').change(function() {
     $('#select_all_students').change(function() {
         $('#student_ids option').prop('selected', $(this).is(':checked'));
     });
+
+
+    $(document).on('click', '.participate-eca-activity', function () {
+        var ecaActivityId = $(this).data('id');
+        $('#eca_activity_id').val(ecaActivityId);
+
+        // Fetching other activity details via DataTables data attributes
+        var rowData = $(this).closest('tr').children('td');
+        $('#activity_id').val(rowData.eq(0).text());
+        $('#activity_title').val(rowData.eq(1).text());
+        $('#activity_description').val(rowData.eq(2).text());
+        $('#activity_player_type').val(rowData.eq(3).text());
+        $('#activity_status').val(rowData.eq(4).text());
+        $('#eca_head_name').val(rowData.eq(5).text());
+
+        // Optionally load class and section data dynamically
+
+        $('#participateModal').modal('show');
+    });
+
+    $('#add_more').click(function () {
+        var newField = `
+                <div class="form-group">
+                    <label for="participant_name">Participant Name</label>
+                    <input type="text" name="participant_name[]" class="form-control participant_name" required>
+                </div>
+            `;
+        $('#participant_names_wrapper').append(newField);
+    });
+
 });
 </script>
 @endsection
