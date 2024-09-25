@@ -418,4 +418,18 @@ class SchoolController extends Controller
         // dd($dataTableQuery);
         return $dataTableQuery;
     }
+     public function resetPassword(Request $request, $id)
+    {
+        $request->validate([
+            'password' => 'required|min:6|confirmed'
+        ]);
+
+
+        $user = User::where('school_id', $id)->firstOrFail();
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return redirect()->back()->withToastSuccess('Password reset successfully!');
+
+    }
 }

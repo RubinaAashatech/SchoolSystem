@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('title');
             $table->text('description');
             $table->string('pdf_image')->nullable();
-            $table->enum('player_type', ['single', 'multi']);
+            $table->enum('player_type', ['single', 'multi', 'competitive']);
             $table->boolean('is_active')->default(0)->comment('0 => no, 1 => yes');
             $table->foreignId('eca_head_id')->constrained('extra_curricular_heads')->onDelete('cascade');
             $table->timestamps();
