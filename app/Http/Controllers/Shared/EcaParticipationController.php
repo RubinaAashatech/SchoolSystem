@@ -46,7 +46,7 @@ class EcaParticipationController extends Controller
             'class_id' => $request->class_id,
             'section_id' => $request->section_id,
             'eca_activity_id' => $request->eca_activity_id,
-            'participant_name' => json_encode($participantIds), // Encode as JSON
+            'participant_name' => json_encode($participantIds), 
             'created_at' => now(),
             'updated_at' => now(),
         ];

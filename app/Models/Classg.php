@@ -53,4 +53,9 @@ class Classg extends Model
 {
     return $this->hasMany(Student::class, 'class_id');
 }
+
+public function isSelectedForActivity()
+{
+    return $this->activities()->where('id', $this->pivot->activity_id)->exists();
+}
 }

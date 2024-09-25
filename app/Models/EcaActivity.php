@@ -15,6 +15,7 @@ class EcaActivity extends Model
         'is_active',
         'eca_head_id',
         'pdf_image',
+        'created_by'
     ];
 
     public function ecaHead()
