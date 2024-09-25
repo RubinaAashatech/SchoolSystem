@@ -29,7 +29,6 @@
                                             <th>Action</th>
                                         </tr>
                                     </thead>
-
                                 </table>
                             </div>
                         </div>
@@ -237,6 +236,101 @@
     </div>
 </div>
 </div>
+
+<!-- Result Modal -->
+<div class="modal fade" id="resultModal" tabindex="-1" role="dialog" aria-labelledby="resultModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resultModalLabel">Store ECA Result</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="resultForm" method="POST" action="{{ route('admin.eca.results.store') }}">
+                    @csrf
+                        <input type="hidden" name="eca_participation_id" id="ecaParticipationId" class="form-control" readonly>
+                    <div class="form-group">
+                        <label for="activityTitle">ECA Activity</label>
+                        <input type="text" id="activityTitle" class="form-control" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="playerType">Player Type</label>
+                        <input type="text" id="playerType" class="form-control" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="school">School</label>
+                        <select id="school" class="form-control" required>
+                            <!-- School dropdown options will be populated via JavaScript -->
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="participantGroup" style="display:none;">
+                        <label for="participantName">Participant Names</label>
+                        <textarea id="participantName" name="participant_name" class="form-control" readonly></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="resultType">Result Type</label>
+                        <select name="result_type" id="resultType" class="form-control" required>
+                            <option value="first">First</option>
+                            <option value="second">Second</option>
+                            <option value="third">Third</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea name="description" id="description" class="form-control"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="is_publish">Publish Result</label>
+                        <input type="checkbox" name="is_publish" id="is_publish" value="1">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).on('click', '.result-eca-activity', function() {
+    var participationId = $(this).data('participation-id');
+    var activityTitle = $(this).data('activity-title');
+    var playerType = $(this).data('player-type');
+    var schools = $(this).data('schools');
+    var participants = $(this).data('participants');
+
+    $('#ecaParticipationId').val(participationId);
+    $('#activityTitle').val(activityTitle);
+    $('#playerType').val(playerType);
+
+    var schoolSelect = $('#school');
+    schoolSelect.empty(); 
+    $.each(schools, function(schoolId, schoolName) {
+        schoolSelect.append('<option value="' + schoolId + '">' + schoolName + '</option>');
+    });
+
+    if (playerType === 'competitive') {
+        $('#participantGroup').show();
+        var participantNames = participants[Object.keys(participants)[0]]; 
+        $('#participantName').val(participantNames.join(', '));
+    } else {
+        $('#participantGroup').hide();
+    }
+
+    $('#resultModal').modal('show');
+});
+
+</script>
+       
+    
 @endsection
 @section('scripts')
 <script>

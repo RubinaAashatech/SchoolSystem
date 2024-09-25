@@ -24,4 +24,9 @@ class ExtraCurricularHead extends Model
     {
         return $this->hasMany(EcaActivity::class, 'eca_activity_id');
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id'); // Assuming 'user_id' is the foreign key in your table
+    }
 }

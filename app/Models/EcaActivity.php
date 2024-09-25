@@ -37,4 +37,14 @@ class EcaActivity extends Model
     {
         return $this->belongsToMany(Classg::class, 'eca_activity_class', 'eca_activity_id', 'class_id');
     }
+
+    public function isMunicipalityCreated()
+    {
+        return optional($this->ecaHead)->user->role === 'municipality';
+    }
+
+    public function user()
+{
+    return $this->belongsTo(User::class);
+}
 }
