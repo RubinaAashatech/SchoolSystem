@@ -50,14 +50,31 @@ class DashboardController extends Controller
         $today = Carbon::today()->format('Y-m-d');
         $nepaliDateToday = LaravelNepaliDate::from($today)->toNepaliDate();
     
-        // Count present and absent students across all schools
-        $presentStudents = StudentAttendance::where('attendance_type_id', 1)
-            ->where('date', $nepaliDateToday)
-            ->count();
+        // Initialize total present and absent students counters
+        $totalPresentStudents = 0;
+        $totalAbsentStudents = 0;
     
-        $absentStudents = StudentAttendance::where('attendance_type_id', 2)
-            ->where('date', $nepaliDateToday)
-            ->count();
+        // Get class-wise attendance data for all active students
+        $classWiseData = StudentSession::where('is_active', 1)
+            ->with([
+                'studentAttendances' => function ($query) use ($nepaliDateToday) {
+                    $query->whereDate('date', $nepaliDateToday);
+                },
+                'student.user'
+            ])
+            ->get();
+    
+        // Process attendance data to count present and absent students
+        foreach ($classWiseData as $session) {
+            $attendance = $session->studentAttendances->first();
+            if ($attendance) {
+                if ($attendance->attendance_type_id == 1) { // Present
+                    $totalPresentStudents++;
+                } elseif ($attendance->attendance_type_id == 2) { // Absent
+                    $totalAbsentStudents++;
+                }
+            }
+        }
     
         // Staff attendance count across all schools
         $totalStaffs = Staff::count();
@@ -83,11 +100,9 @@ class DashboardController extends Controller
             $totalStudentsInSchool = Student::where('school_id', $schoolId)->count();
     
             // Get class-wise attendance data for the school
-            $classWiseData = StudentSession::where('school_id', $schoolId)
+            $schoolClassWiseData = StudentSession::where('school_id', $schoolId)
                 ->where('is_active', 1)
                 ->with([
-                    'classg',
-                    'section',
                     'studentAttendances' => function ($query) use ($nepaliDateToday) {
                         $query->whereDate('date', $nepaliDateToday);
                     },
@@ -95,12 +110,12 @@ class DashboardController extends Controller
                 ])
                 ->get();
     
-            // Initialize present and absent counts for students
+            // Initialize present and absent counts for students in this school
             $presentStudentsInSchool = 0;
             $absentStudentsInSchool = 0;
     
-            // Process class-wise attendance data
-            foreach ($classWiseData as $session) {
+            // Process class-wise attendance data for the school
+            foreach ($schoolClassWiseData as $session) {
                 $attendance = $session->studentAttendances->first();
                 if ($attendance) {
                     if ($attendance->attendance_type_id == 1) { // Present
@@ -129,7 +144,7 @@ class DashboardController extends Controller
                 ->where('date', $nepaliDateToday)
                 ->count();
     
-            // Add the data to the array
+            // Add the school-specific data to the array
             $schoolData[] = [
                 'school_id' => $school->id,
                 'school_name' => $school->name,
@@ -143,9 +158,6 @@ class DashboardController extends Controller
             ];
         }
     
-        // Get school-wise student data
-        $schoolWiseStudentData = $this->getSchoolWiseStudents();
-    
         $totalSchools = School::count();
         $page_title = Auth::user()->getRoleNames()[0] . ' ' . "Dashboard";
     
@@ -157,29 +169,29 @@ class DashboardController extends Controller
     
         $school_staffs = $this->schoolService->getSchoolStaff();
         $school_staffs_count = $this->schoolWiseCountOfStaff($school_staffs);
-        
+    
         $school_wise_student_attendences = $this->schoolService->getSchoolWiseStudentAttendence();
-        
+    
         return view('backend.municipality_admin.dashboard.dashboard', [
-            'presentStudents' => $presentStudents,
+            'presentStudents' => $totalPresentStudents,
             'totalStudents' => $totalStudents,
-            'absentStudents' => $absentStudents,
+            'absentStudents' => $totalAbsentStudents,
             'totalStaffs' => $totalStaffs,
             'presentStaffs' => $presentStaffs,
             'absentStaffs' => $absentStaffs,
             'schoolData' => $schoolData,
             'major_incidents' => $majorIncidentsCount,
             'totalSchools' => $totalSchools,
-            'totalGirls' => $totalGirls, // Pass total girls count
-            'totalBoys' => $totalBoys, // Pass total boys count
+            'totalGirls' => $totalGirls,
+            'totalBoys' => $totalBoys,
             'todays_major_incidents' => $todays_major_incidents,
             'school_staffs' => $school_staffs,
             'school_staffs_count' => $school_staffs_count,
             'school_students_count' => $school_students_count,
             'school_wise_student_attendences' => $school_wise_student_attendences,
-            'schoolWiseStudentData' => $schoolWiseStudentData, // Pass school-wise student data
         ]);
     }
+    
     
 
     private function getSchoolWiseStudents()
