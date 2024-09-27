@@ -491,7 +491,7 @@
                             <div class="icon border-radius-100 font-24 text-blue"><i class="fa-solid fa-child-dress"></i></div>
                         </div>
                         <div class="widget-data">
-                            <div class="weight-800 font-18">{{ $presentGirls }}</div>
+                            <div class="weight-800 font-18">{{ $totalPresentGirls }}</div>
                             <div class="weight-500">Present Girls</div>
                         </div>
                     </div>
@@ -505,7 +505,7 @@
                             <div class="icon border-radius-100 font-24 text-blue"><i class="fa-solid fa-child"></i></div>
                         </div>
                         <div class="widget-data">
-                            <div class="weight-800 font-18">{{ $presentBoys }}</div>
+                            <div class="weight-800 font-18">{{ $totalPresentBoys }}</div>
                             <div class="weight-500">Present Boys</div>
                         </div>
                     </div>
@@ -519,7 +519,7 @@
                             <div class="icon border-radius-100 font-24 text-blue"><i class="fa-solid fa-xmark"></i></div>
                         </div>
                         <div class="widget-data">
-                            <div class="weight-800 font-18">{{ $absentGirls }}</div>
+                            <div class="weight-800 font-18">{{ $totalAbsentGirls }}</div>
                             <div class="weight-500">Absent Girls</div>
                         </div>
                     </div>
@@ -533,7 +533,7 @@
                             <div class="icon border-radius-100 font-24 text-blue"><i class="fa-solid fa-xmark"></i></div>
                         </div>
                         <div class="widget-data">
-                            <div class="weight-800 font-18">{{ $absentBoys }}</div>
+                            <div class="weight-800 font-18">{{ $totalAbsentBoys }}</div>
                             <div class="weight-500">Absent Boys</div>
                         </div>
                     </div>

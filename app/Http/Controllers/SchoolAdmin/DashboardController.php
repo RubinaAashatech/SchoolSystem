@@ -36,102 +36,94 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $schoolName = $user->f_name;
+    $schoolName = $user->f_name;
 
-        // Calculate initials from all words in the school name
-        $words = explode(' ', $schoolName);
-        $initials = '';
-        foreach ($words as $word) {
-            $initials .= strtoupper(substr($word, 0, 1));
+    // Calculate initials from the school name
+    $words = explode(' ', $schoolName);
+    $initials = '';
+    foreach ($words as $word) {
+        $initials .= strtoupper(substr($word, 0, 1));
+    }
+
+    $schoolId = Auth::user()->school_id;
+
+    // Count total students, boys, and girls
+    $totalStudents = Student::where('school_id', $schoolId)->count();
+    $totalGirls = Student::where('school_id', $schoolId)
+        ->whereHas('user', function ($query) {
+            $query->where('gender', 'female');
+        })->count();
+    $totalBoys = Student::where('school_id', $schoolId)
+        ->whereHas('user', function ($query) {
+            $query->where('gender', 'male');
+        })->count();
+
+    // Convert today's date to Nepali date
+    $today = Carbon::today()->format('Y-m-d');
+    $nepaliDateToday = LaravelNepaliDate::from($today)->toNepaliDate();
+
+    // Get class-wise attendance data
+    $classWiseData = StudentSession::where('school_id', $schoolId)
+        ->where('is_active', 1)
+        ->with([
+            'classg',
+            'section',
+            'studentAttendances' => function ($query) use ($nepaliDateToday) {
+                $query->whereDate('date', $nepaliDateToday);
+            },
+            'student.user'
+        ])
+        ->get()
+        ->groupBy(['class_id', 'section_id']);
+
+    // Initialize total present and absent counts for boys and girls
+    $totalPresentBoys = 0;
+    $totalPresentGirls = 0;
+    $totalAbsentBoys = 0;
+    $totalAbsentGirls = 0;
+
+    // Process class-wise attendance data
+    foreach ($classWiseData as $classId => $sections) {
+        foreach ($sections as $sectionId => $sessions) {
+            foreach ($sessions as $session) {
+                $gender = $session->student->user->gender ?? 'Unknown';
+
+                $attendance = $session->studentAttendances->first();
+                if ($attendance) {
+                    if ($attendance->attendance_type_id == 1) { // Present
+                        if ($gender == 'Male') {
+                            $totalPresentBoys++;
+                        } elseif ($gender == 'Female') {
+                            $totalPresentGirls++;
+                        }
+                    } elseif ($attendance->attendance_type_id == 2) { // Absent
+                        if ($gender == 'Male') {
+                            $totalAbsentBoys++;
+                        } elseif ($gender == 'Female') {
+                            $totalAbsentGirls++;
+                        }
+                    }
+                }
+            }
         }
+    }
 
-        $schoolId = Auth::user()->school_id;
+    // Calculate total present and absent students
+    $presentStudents = $totalPresentBoys + $totalPresentGirls;
+    $absentStudents = $totalAbsentBoys + $totalAbsentGirls;
 
-        // Count the students in the same school
-        $totalStudents = Student::where('school_id', $schoolId)->count();
-
-        // Count the girls in the same school
-        $totalGirls = Student::where('school_id', $schoolId)
-            ->whereHas('user', function ($query) {
-                $query->where('gender', 'female');
-            })
-            ->count();
-
-        // Count the boys in the same school
-        $totalBoys = Student::where('school_id', $schoolId)
-            ->whereHas('user', function ($query) {
-                $query->where('gender', 'male');
-            })
-            ->count();
-
-        // Convert today's date to Nepali date
-        $today = Carbon::today()->format('Y-m-d');
-        $nepaliDateToday = LaravelNepaliDate::from($today)->toNepaliDate();
-
-        // Count the present students for today
-        $presentStudents = StudentAttendance::where('attendance_type_id', 1)
-            ->whereHas('student', function ($query) use ($schoolId) {
-                $query->where('school_id', $schoolId);
-            })
-            ->whereDate('date', $nepaliDateToday) // Filter by today's date
-            ->count();
-
-        // Count the present girls for today
-        $presentGirls = StudentAttendance::where('attendance_type_id', 1)
-            ->whereHas('student.user', function ($query) use ($schoolId) {
-                $query->where('school_id', $schoolId)->where('gender', 'female');
-            })
-            ->whereDate('date', $nepaliDateToday) // Filter by today's date
-            ->count();
-
-        // Count the present boys for today
-        $presentBoys = StudentAttendance::where('attendance_type_id', 1)
-            ->whereHas('student.user', function ($query) use ($schoolId) {
-                $query->where('school_id', $schoolId)->where('gender', 'male');
-            })
-            ->whereDate('date', $nepaliDateToday) // Filter by today's date
-            ->count();
-
-        // Count the absent students for today
-        $absentStudents = StudentAttendance::where('attendance_type_id', 2)
-            ->whereHas('student', function ($query) use ($schoolId) {
-                $query->where('school_id', $schoolId);
-            })
-            ->whereDate('date', $nepaliDateToday) // Filter by today's date
-            ->count();
-
-        // Count the absent girls for today
-        $absentGirls = StudentAttendance::where('attendance_type_id', 2)
-            ->whereHas('student.user', function ($query) use ($schoolId) {
-                $query->where('school_id', $schoolId)->where('gender', 'female');
-            })
-            ->whereDate('date', $nepaliDateToday) // Filter by today's date
-            ->count();
-
-        // Count the absent boys for today
-        $absentBoys = StudentAttendance::where('attendance_type_id', 2)
-            ->whereHas('student.user', function ($query) use ($schoolId) {
-                $query->where('school_id', $schoolId)->where('gender', 'male');
-            })
-            ->whereDate('date', $nepaliDateToday) // Filter by today's date
-            ->count();
-
-        $totalStaffs = Staff::where('school_id', $schoolId)->count();
-
-        $presentStaffs = StaffAttendance::where('attendance_type_id', 1)
-            ->whereHas('staff', function ($query) use ($schoolId) {
-                $query->where('school_id', $schoolId);
-            })
-            ->whereDate('date', $nepaliDateToday) // Filter by today's date
-            ->count();
-
-        // Count the absent staff members for today
-        $absentStaffs = StaffAttendance::where('attendance_type_id', 2)
-            ->whereHas('staff', function ($query) use ($schoolId) {
-                $query->where('school_id', $schoolId);
-            })
-            ->whereDate('date', $nepaliDateToday) // Filter by today's date
-            ->count();
+    // Calculate staff attendance
+    $totalStaffs = Staff::where('school_id', $schoolId)->count();
+    $presentStaffs = StaffAttendance::where('attendance_type_id', 1)
+        ->whereHas('staff', function ($query) use ($schoolId) {
+            $query->where('school_id', $schoolId);
+        })
+        ->whereDate('date', $nepaliDateToday)->count();
+    $absentStaffs = StaffAttendance::where('attendance_type_id', 2)
+        ->whereHas('staff', function ($query) use ($schoolId) {
+            $query->where('school_id', $schoolId);
+        })
+        ->whereDate('date', $nepaliDateToday)->count();
 
         $page_title = Auth::user()->getRoleNames()[0] . ' ' . "Dashboard";
 
@@ -140,13 +132,22 @@ class DashboardController extends Controller
         $staff_data = $this->getStaffData();
         $staff_attendance = $this->getStaffAttendanceData();
 
+        // return view('backend.school_admin.dashboard.dashboard', compact(
+        //     'page_title', 'class_wise_student_attendances', 'class_wise_students', 
+        //     'totalStudents', 'presentStudents', 'absentStudents', 'totalStaffs', 
+        //     'presentStaffs', 'absentStaffs', 'totalGirls', 'totalBoys', 
+        //     'presentGirls', 'presentBoys', 'absentGirls', 'absentBoys', 
+        //     'initials', 'staff_data', 'staff_attendance'
+        // ));
         return view('backend.school_admin.dashboard.dashboard', compact(
-            'page_title', 'class_wise_student_attendances', 'class_wise_students', 
-            'totalStudents', 'presentStudents', 'absentStudents', 'totalStaffs', 
-            'presentStaffs', 'absentStaffs', 'totalGirls', 'totalBoys', 
-            'presentGirls', 'presentBoys', 'absentGirls', 'absentBoys', 
-            'initials', 'staff_data', 'staff_attendance'
+            'page_title', 'totalStudents', 'totalGirls', 'totalBoys', 
+            'totalPresentBoys', 'totalPresentGirls', 'totalAbsentBoys', 
+            'totalAbsentGirls', 'presentStudents', 'absentStudents',
+            'totalStaffs', 'presentStaffs', 'absentStaffs', 'initials','staff_attendance',
+            'staff_data', 'class_wise_student_attendances', 'class_wise_students'
         ));
+
+
     }
 
     private function getClassWiseStudents()
