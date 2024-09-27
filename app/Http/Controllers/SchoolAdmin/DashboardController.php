@@ -143,6 +143,10 @@ class DashboardController extends Controller
         $staff_data = $this->getStaffData();
         $staff_attendance = $this->getStaffAttendanceData();
         $unreadNotice = Notice::getUnreadNoticesForSchool();
+        if ($unreadNotice) {
+            $this->markNoticeAsRead($unreadNotice->id, Auth::id());
+        }
+        
 
         return view('backend.school_admin.dashboard.dashboard', compact(
             'page_title', 'class_wise_student_attendances', 'class_wise_students', 

@@ -92,10 +92,23 @@ class NoticeController extends Controller
     }
 
     public function destroy(Notice $notice)
-    {
+{
+    try {
         $notice->delete();
+        if (request()->ajax()) {
+            return response()->json(['success' => true], 200); 
+        }
+
         return redirect()->route('admin.notices.index')->with('success', 'Notice deleted successfully.');
+
+    } catch (\Exception $e) {
+        if (request()->ajax()) {
+            return response()->json(['error' => 'Error deleting notice'], 500); 
+        }
+
+        return redirect()->route('admin.notices.index')->with('error', 'Error deleting notice.');
     }
+}
 
     public function getNotices(Request $request)
     {
@@ -109,7 +122,6 @@ class NoticeController extends Controller
     
             $notices = Notice::select(['id', 'title', 'description', 'notice_released_date', 'notice_who_to_send', 'created_by']);
     
-            // Filter notices based on user type
             if ($userType === 'municipality') {
                 $notices->where('created_by', 'municipality');
             } elseif ($userType === 'school_admin') {
@@ -118,15 +130,12 @@ class NoticeController extends Controller
                           ->orWhere('created_by', $user->id);
                 });
             } else {
-                // For other user types (teacher, parent, student)
                 $notices->where(function ($query) use ($user, $userType) {
                     $query->where('created_by', 'municipality')
                           ->orWhere('created_by', $user->school_id)
                           ->orWhereRaw("JSON_CONTAINS(notice_who_to_send, ?)", ['"'.$userType.'"']);
                 });
             }
-    
-            // Include notices created by the current user
             $notices->orWhere('created_by', $user->id);
     
             return DataTables::of($notices)
@@ -153,4 +162,22 @@ class NoticeController extends Controller
             return response()->json(['error' => 'An error occurred while processing your request.'], 500);
         }
     }
+    public function markNoticeAsRead($noticeId, $userId)
+{
+
+    $existingView = NoticeView::where('notice_id', $noticeId)
+        ->where('user_id', $userId)
+        ->first();
+
+    if (!$existingView) {
+    
+        NoticeView::create([
+            'notice_id' => $noticeId,
+            'user_id' => $userId,
+            'viewed_at' => now(),
+        ]);
+    } else {
+        Log::info("Notice {$noticeId} was already marked as read for user {$userId}");
+    }
+}      
 }

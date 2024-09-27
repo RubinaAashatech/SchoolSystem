@@ -47,12 +47,26 @@ public function municipality()
     public static function getUnreadNoticesForSchool()
     {
         $schoolId = Auth::id();
-        return self::where('created_by', 3) // Assuming 3 is the municipality's user ID
-            ->whereJsonContains('notice_who_to_send', 'school')
-            ->whereDoesntHave('views', function ($query) use ($schoolId) {
-                $query->where('user_id', $schoolId);
-            })
+        Log::info("Fetching unread notices for school ID: {$schoolId}");
+    
+        $unreadNotice = self::where('created_by', 3)
             ->latest()
             ->first();
-    }
+    
+        if ($unreadNotice) {
+            $alreadyViewed = NoticeView::where('notice_id', $unreadNotice->id)
+                ->where('user_id', $schoolId)
+                ->exists();
+    
+            Log::info('Already viewed by school: ' . ($alreadyViewed ? 'Yes' : 'No'));
+    
+            if (!$alreadyViewed) {
+                Log::info('Unread notice found: ' . $unreadNotice->id);
+                return $unreadNotice;
+            }
+        }
+        Log::info('No unread notices found.');
+        return null;
+    }   
+
 }

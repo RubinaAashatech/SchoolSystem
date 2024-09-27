@@ -145,6 +145,7 @@
 
     $(document).on('click', '.deleteNotice', function () {
     var id = $(this).data('id');
+    
     if (confirm('Are you sure you want to delete this notice?')) {
         $.ajax({
             url: '{{ route('admin.notices.destroy', '') }}' + '/' + id,
@@ -152,9 +153,10 @@
             data: {
                 "_token": "{{ csrf_token() }}",
             },
-            success: function (data) {
-                alert('Notice deleted successfully');
-                $('#notices-table').DataTable().ajax.reload();
+            success: function (response) {
+                if (response.success) {
+                    $('#notices-table').DataTable().ajax.reload();
+                }
             },
             error: function (xhr) {
                 alert('Error deleting notice');
@@ -162,6 +164,7 @@
         });
     }
 });
+
 
     // Add a click event for the "Add Notice" button
     $(document).on('click', '#addNoticeBtn', function() {

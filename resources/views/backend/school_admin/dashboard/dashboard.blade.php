@@ -345,6 +345,59 @@
         .apexcharts-legend-marker {
             margin-right: 6px !important;
         }
+
+        .custom-modal .modal-content {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .custom-modal .modal-header {
+        border-bottom: none;
+        padding: 20px 30px;
+        background-color: #f8f9fa;
+        border-top-left-radius: 15px;
+        border-top-right-radius: 15px;
+    }
+    .custom-modal .modal-title {
+        font-weight: 600;
+        color: #333;
+    }
+    .custom-modal .modal-body {
+        padding: 30px;
+    }
+    .custom-modal .modal-footer {
+        border-top: none;
+        padding: 20px 30px;
+    }
+    .custom-modal .close {
+        font-size: 28px;
+        color: #aaa;
+        transition: color 0.2s ease;
+    }
+    .custom-modal .close:hover {
+        color: #333;
+    }
+    .custom-modal .btn-primary {
+        background-color: #007bff;
+        border: none;
+        border-radius: 25px;
+        padding: 10px 25px;
+        font-weight: 500;
+        transition: background-color 0.2s ease;
+    }
+    .custom-modal .btn-primary:hover {
+        background-color: #0056b3;
+    }
+    .custom-modal .attachment-link {
+        display: inline-block;
+        margin-top: 15px;
+        color: #007bff;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+    .custom-modal .attachment-link:hover {
+        color: #0056b3;
+    }
     </style>
 
     <div class="mt-4">
@@ -605,105 +658,63 @@
                         </div>
                     </div>
                 </div>
-
+                <!-- Notice Modal-->
                 @if($unreadNotice)
-                <div id="noticePopup" class="modal">
-                    <div class="modal-content">
-                        <span class="close">&times;</span>
-                        <h2>{{ $unreadNotice->title }}</h2>
-                        <p>{{ $unreadNotice->description }}</p>
-                        @if($unreadNotice->pdf_image)
-                            <a href="{{ asset('storage/' . $unreadNotice->pdf_image) }}" target="_blank">View Attachment</a>
-                        @endif
-                        <button id="markAsRead">Mark as Read</button>
+                <div id="noticeModal" class="modal custom-modal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">{{ $unreadNotice->title }}</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <p>{{ $unreadNotice->description }}</p>
+                                @if($unreadNotice->pdf_image)
+                                <a href="{{ asset('storage/'.$unreadNotice->pdf_image) }}" target="_blank" class="attachment-link">
+                                    <i class="fas fa-paperclip mr-2"></i>View Attachment
+                                </a>
+                                @endif
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" id="markAsRead">Got it!</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            
-                <style>
-                    .modal {
-                        display: none;
-                        position: fixed;
-                        z-index: 1000;
-                        left: 0;
-                        top: 0;
-                        width: 100%;
-                        height: 100%;
-                        overflow: auto;
-                        background-color: rgba(0,0,0,0.4);
-                    }
-            
-                    .modal-content {
-                        background-color: #fefefe;
-                        margin: 15% auto;
-                        padding: 20px;
-                        border: 1px solid #888;
-                        width: 80%;
-                        max-width: 600px;
-                    }
-            
-                    .close {
-                        color: #aaa;
-                        float: right;
-                        font-size: 28px;
-                        font-weight: bold;
-                        cursor: pointer;
-                    }
-            
-                    .close:hover,
-                    .close:focus {
-                        color: black;
-                        text-decoration: none;
-                    }
-            
-                    #markAsRead {
-                        margin-top: 20px;
-                        padding: 10px 20px;
-                        background-color: #4CAF50;
-                        color: white;
-                        border: none;
-                        cursor: pointer;
-                    }
-            
-                    #markAsRead:hover {
-                        background-color: #45a049;
-                    }
-                </style>
-            
+
                 <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        var modal = document.getElementById("noticePopup");
-                        var span = document.getElementsByClassName("close")[0];
-                        var markAsReadBtn = document.getElementById("markAsRead");
-            
-                        modal.style.display = "block";
-            
-                        span.onclick = function() {
-                            modal.style.display = "none";
-                        }
-            
-                        markAsReadBtn.onclick = function() {
-                            fetch('{{ route("school.markNoticeAsRead", ["noticeId" => $unreadNotice->id]) }}', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                                }
-                            }).then(response => response.json())
-                              .then(data => {
-                                  if (data.success) {
-                                      modal.style.display = "none";
-                                  }
-                              });
-                        }
-            
-                        window.onclick = function(event) {
-                            if (event.target == modal) {
-                                modal.style.display = "none";
+                $(document).ready(function() {
+                    console.log("Modal should appear for notice ID: {{ $unreadNotice->id }}");
+                    $('#noticeModal').modal('show');
+
+                    $('#markAsRead').on('click', function() {
+                        console.log("Marking notice as read for ID: {{ $unreadNotice->id }}");
+
+                        $.ajax({
+                            url: '{{ route('admin.notice.markAsRead', $unreadNotice->id) }}',
+                            method: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}'
+                            },
+                            success: function() {
+                                console.log("Notice marked as read.");
+                                $('#noticeModal').modal('hide');
+                            },
+                            error: function(xhr, status, error) {
+                                console.error("Error marking notice as read: ", error);
+                                $('#noticeModal').modal('hide');
                             }
-                        }
+                        });
                     });
+
+                    $('.custom-modal .close').on('click', function() {
+                        $('#noticeModal').modal('hide');
+                    });
+                });
                 </script>
-            @endif
+                @endif
             </div>
         @endsection
         

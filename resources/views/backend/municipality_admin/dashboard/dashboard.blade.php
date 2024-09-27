@@ -608,7 +608,7 @@
                 <div class="bg-white widget-style1 border-radius-10 height-100-p box-shadow">
                     <div class="d-flex flex-wrap align-items-center">
                         <div class="circle-icon">
-                            <div class="icon border-radius-100 font-24 text-blue"><i class="fa-solid fa-bell"></i></div>
+                            <div class="icon border-radius-100 font-24 text-blue"><i class="fa-solid fa-trophy"></i></div>
                         </div>
                         <div class="widget-data">
                             <div class="weight-800 font-18">{{ $ECACount }}</div>
