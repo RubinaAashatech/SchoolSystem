@@ -49,14 +49,24 @@ class HeadTeacherLogReportController extends Controller
         $classWiseCounts = [];
         $debugInfo = [];
 
+
+
+            // Initialize total present and absent counts for boys and girls
+            $totalPresentBoys = 0;
+            $totalPresentGirls = 0;
+            $totalAbsentBoys = 0;
+            $totalAbsentGirls = 0;
+
         foreach ($classWiseData as $classId => $sections) {
             foreach ($sections as $sectionId => $sessions) {
                 $className = $sessions->first()->classg->class ?? 'Unknown Class';
                 $sectionName = $sessions->first()->section->section_name ?? 'Unknown Section';
+             
                 $presentBoys = 0;
                 $presentGirls = 0;
                 $absentBoys = 0;
                 $absentGirls = 0;
+                
                 $totalBoys = 0;
                 $totalGirls = 0;
                 $unknownGender = 0;
@@ -82,15 +92,19 @@ class HeadTeacherLogReportController extends Controller
                             $attendanceStatus = 'Present';
                             if ($gender == 'Male') {
                                 $presentBoys++;
+                                $totalPresentBoys++; 
                             } elseif ($gender == 'Female') {
                                 $presentGirls++;
+                                $totalPresentGirls++;
                             }
                         } elseif ($attendance->attendance_type_id == 2) { // Absent
                             $attendanceStatus = 'Absent';
                             if ($gender == 'Male') {
                                 $absentBoys++;
+                                $totalAbsentBoys++;
                             } elseif ($gender == 'Female') {
                                 $absentGirls++;
+                                $totalAbsentGirls++; 
                             }
                         }
                     }
@@ -142,6 +156,12 @@ class HeadTeacherLogReportController extends Controller
             'assemblyManagement' => $teacherLog->assembly_management ?? '',
             'miscellaneous' => $teacherLog->miscellaneous ?? '',
             'debugInfo' => $debugInfo,
+
+              // Include total counts in the response
+        'totalPresentBoys' => $totalPresentBoys,
+        'totalPresentGirls' => $totalPresentGirls,
+        'totalAbsentBoys' => $totalAbsentBoys,
+        'totalAbsentGirls' => $totalAbsentGirls,
         ];
 
         if ($request->ajax()) {

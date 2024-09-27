@@ -63,6 +63,22 @@
                                     <td></td>
                                 </tr>
                                 <tr>
+                                    <td>Present Boys:</td>
+                                    <td id="totalPresentBoys">{{ $totalPresentBoys }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Present Girls:</td>
+                                    <td id="totalPresentGirls">{{ $totalPresentGirls }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Absent Boys:</td>
+                                    <td id="totalAbsentBoys">{{ $totalAbsentBoys }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Absent Girls:</td>
+                                    <td id="totalAbsentGirls">{{ $totalAbsentGirls }}</td>
+                                </tr>
+                                <tr>
                                     <td>Present Staffs: </td>
                                     <td id="presentStaffs">{{ $presentStaffs }}</td>
                                     <td></td>
@@ -162,6 +178,10 @@
                         $('#totalStudents').text(response.totalStudents);
                         $('#presentStaffs').text(response.presentStaffs);
                         $('#absentStaffs').text(response.absentStaffs);
+                        $('#totalPresentBoys').text(response.totalPresentBoys);
+                        $('#totalPresentGirls').text(response.totalPresentGirls);
+                        $('#totalAbsentBoys').text(response.totalAbsentBoys);
+                        $('#totalAbsentGirls').text(response.totalAbsentGirls);
                         $('#majorIncident').text(response.majorIncident);
                         $('#majorWorkObservation').text(response.majorWorkObservation);
                         $('#assemblyManagement').text(response.assemblyManagement);
