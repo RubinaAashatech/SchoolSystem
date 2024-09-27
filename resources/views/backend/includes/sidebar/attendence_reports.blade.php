@@ -42,6 +42,14 @@
             </a>
         </li>
         @endcan --}}
+        @can('view_municipality_headteacher_logs')
+                <li class="nav-item"><a class="nav-link {{ Request::segment(2) == 'municipality-headteacher-logs' ? 'active' : '' }}"
+                        href="{{ route('admin.municipality-headteacher-logs.index') }}">
+                        <div class="d-flex align-items-center"><i class="fa fa-angle-double-right"></i>{{__('Municipality Head Teacher Logs')}}
+                        </div>
+                    </a>
+                </li>
+            @endcan
         </ul>
     </li>
     </li>

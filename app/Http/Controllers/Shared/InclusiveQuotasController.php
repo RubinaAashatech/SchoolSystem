@@ -17,12 +17,12 @@ class InclusiveQuotasController extends Controller
     {
         $page_title = 'Inclusive Quotas Listing';
         $inclusivequotas = Inclusivequota::orderBy('created_at', 'desc')->paginate(10);
-        return view('shared.inclusivequotas.index', compact('page_title', 'inclusivequotas'));
+        return view('backend.shared.inclusivequotas.index', compact('page_title', 'inclusivequotas'));
     }
     public function create()
     {
         $page_title = 'Inclusive Create Form';
-        return view('shared.inclusivequotas.create', compact('page_title'));
+        return view('backend.shared.inclusivequotas.create', compact('page_title'));
     }
     public function store(Request $request)
     {

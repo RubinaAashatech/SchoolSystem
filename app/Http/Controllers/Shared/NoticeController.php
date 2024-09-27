@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Shared;
 
 use App\Http\Controllers\Controller;
 use App\Models\Notice;
+use App\Models\NoticeView;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Auth;
@@ -152,5 +153,4 @@ class NoticeController extends Controller
             return response()->json(['error' => 'An error occurred while processing your request.'], 500);
         }
     }
-    
 }

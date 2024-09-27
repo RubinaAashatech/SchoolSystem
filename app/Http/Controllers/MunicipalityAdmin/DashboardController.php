@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\MunicipalityAdmin;
 
-use Auth;
 use Carbon\Carbon;
 use App\Models\Staff;
 use App\Models\School;
 use App\Models\Student;
+use App\Models\Notice;
+use App\Models\EcaActivity;
 use App\Models\StaffAttendance;
 use App\Models\StudentAttendance;
 use App\Http\Controllers\Controller;
@@ -15,6 +16,8 @@ use App\Http\Services\DashboardService;
 use App\Models\HeadTeacherLog;
 use Anuzpandey\LaravelNepaliDate\LaravelNepaliDate;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
@@ -144,7 +147,8 @@ class DashboardController extends Controller
         
         $school_wise_student_attendences = $this->schoolService->getSchoolWiseStudentAttendence();
         $school_staffs_count = $this->schoolWiseCountOfStaff($school_staffs);
-
+        $noticeData = $this->fetchMunicipalityNoticeData();
+        $ECAData = $this->fetchMunicipalityEcaData();
         return view('backend.municipality_admin.dashboard.dashboard', [
             'presentStudents' => $presentStudents,
             'totalStudents' => $totalStudents,
@@ -163,6 +167,8 @@ class DashboardController extends Controller
             'school_students_count' => $school_students_count,
             'school_wise_student_attendences' => $school_wise_student_attendences,
             'schoolWiseStudentData' => $schoolWiseStudentData, // Pass school-wise student data
+            'noticeCount' => $noticeData['count'],
+            'ECACount' => $ECAData['count'],
         ]);
     }
 
@@ -216,6 +222,34 @@ class DashboardController extends Controller
     //         ]
     //     ];
     // }
+
+    private function fetchMunicipalityNoticeData()
+    {
+        $municipalityId = Auth::user()->municipality_id; 
+        $notices = Notice::whereHas('creator', function($query) {
+            $query->where('user_type_id', 3); 
+        })->get();
+    
+        $count = $notices->count();
+    
+        return [
+            'count' => $count,
+        ];
+    }
+    private function fetchMunicipalityEcaData()
+    {
+        $municipalityId = Auth::user()->municipality_id; 
+        $ecaActivities = EcaActivity::whereHas('creator', function($query) {
+            $query->where('user_type_id', 3); 
+        })->get();
+    
+        $count = $ecaActivities->count();
+    
+        return [
+            'count' => $count,
+        ];
+    }
+    
 
     public function schoolWiseCountOfStaff($originalData)
     {

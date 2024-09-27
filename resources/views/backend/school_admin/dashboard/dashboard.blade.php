@@ -605,6 +605,105 @@
                         </div>
                     </div>
                 </div>
+
+                @if($unreadNotice)
+                <div id="noticePopup" class="modal">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <h2>{{ $unreadNotice->title }}</h2>
+                        <p>{{ $unreadNotice->description }}</p>
+                        @if($unreadNotice->pdf_image)
+                            <a href="{{ asset('storage/' . $unreadNotice->pdf_image) }}" target="_blank">View Attachment</a>
+                        @endif
+                        <button id="markAsRead">Mark as Read</button>
+                    </div>
+                </div>
+            
+                <style>
+                    .modal {
+                        display: none;
+                        position: fixed;
+                        z-index: 1000;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                        height: 100%;
+                        overflow: auto;
+                        background-color: rgba(0,0,0,0.4);
+                    }
+            
+                    .modal-content {
+                        background-color: #fefefe;
+                        margin: 15% auto;
+                        padding: 20px;
+                        border: 1px solid #888;
+                        width: 80%;
+                        max-width: 600px;
+                    }
+            
+                    .close {
+                        color: #aaa;
+                        float: right;
+                        font-size: 28px;
+                        font-weight: bold;
+                        cursor: pointer;
+                    }
+            
+                    .close:hover,
+                    .close:focus {
+                        color: black;
+                        text-decoration: none;
+                    }
+            
+                    #markAsRead {
+                        margin-top: 20px;
+                        padding: 10px 20px;
+                        background-color: #4CAF50;
+                        color: white;
+                        border: none;
+                        cursor: pointer;
+                    }
+            
+                    #markAsRead:hover {
+                        background-color: #45a049;
+                    }
+                </style>
+            
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        var modal = document.getElementById("noticePopup");
+                        var span = document.getElementsByClassName("close")[0];
+                        var markAsReadBtn = document.getElementById("markAsRead");
+            
+                        modal.style.display = "block";
+            
+                        span.onclick = function() {
+                            modal.style.display = "none";
+                        }
+            
+                        markAsReadBtn.onclick = function() {
+                            fetch('{{ route("school.markNoticeAsRead", ["noticeId" => $unreadNotice->id]) }}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                }
+                            }).then(response => response.json())
+                              .then(data => {
+                                  if (data.success) {
+                                      modal.style.display = "none";
+                                  }
+                              });
+                        }
+            
+                        window.onclick = function(event) {
+                            if (event.target == modal) {
+                                modal.style.display = "none";
+                            }
+                        }
+                    });
+                </script>
+            @endif
             </div>
         @endsection
         

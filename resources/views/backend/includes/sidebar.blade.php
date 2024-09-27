@@ -40,12 +40,11 @@
                 @include('backend.includes.sidebar.certificate_management')
                 @include('backend.includes.sidebar.logbook_management')
 
-                @include('backend.includes.sidebar.role_permission')
-                @include('backend.includes.sidebar.user_management')
-
                 @include('backend.includes.sidebar.ECA_activities_management')
                 @include('backend.includes.sidebar.Notice_management')
                 @include('backend.includes.sidebar.attendence_reports')
+                @include('backend.includes.sidebar.user_management')
+                @include('backend.includes.sidebar.role_permission')
             </ul>
         </div>
     </div>

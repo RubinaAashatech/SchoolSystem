@@ -345,6 +345,7 @@ class RolePermissionSeeder extends Seeder
             'list_notice_head',
             'edit_notice_head',
             'delete_notice_head',
+            'view_municipality_headteacher_logs',
 
 
         ];
@@ -580,7 +581,7 @@ class RolePermissionSeeder extends Seeder
             // 'edit_teacher_logs',
             // 'delete_teacher_logs',
             // 'create_headteacher_logs',
-            'list_headteacher_logs',
+            // 'list_headteacher_logs',
             // 'edit_headteacher_logs',
             // 'delete_headteacher_logs',
             'create_schools',
@@ -606,6 +607,7 @@ class RolePermissionSeeder extends Seeder
             'list_notice_head',
             'edit_notice_head',
             'delete_notice_head',
+            'view_municipality_headteacher_logs'
 
         ];
 

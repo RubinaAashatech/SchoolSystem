@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\SchoolAdmin;
 
-use Auth;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Unit;
 use App\Models\User;
 use App\Models\Staff;
 use App\Models\Stock;
 use App\Models\School;
-use App\Models\Product;
+use App\Models\NoticeView;
 use App\Models\Classg;
 use App\Models\Student;
 use Illuminate\Http\Request;
@@ -21,6 +21,8 @@ use App\Http\Services\DashboardService;
 use Carbon\Carbon;
 use Anuzpandey\LaravelNepaliDate\LaravelNepaliDate;
 use Illuminate\Support\Facades\DB;
+use App\Models\Notice;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
@@ -36,6 +38,7 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+    
         $schoolName = $user->f_name;
 
         // Calculate initials from all words in the school name
@@ -139,14 +142,27 @@ class DashboardController extends Controller
         $class_wise_student_attendances = $this->getClassWiseStudentAttendance();
         $staff_data = $this->getStaffData();
         $staff_attendance = $this->getStaffAttendanceData();
+        $unreadNotice = Notice::getUnreadNoticesForSchool();
 
         return view('backend.school_admin.dashboard.dashboard', compact(
             'page_title', 'class_wise_student_attendances', 'class_wise_students', 
             'totalStudents', 'presentStudents', 'absentStudents', 'totalStaffs', 
             'presentStaffs', 'absentStaffs', 'totalGirls', 'totalBoys', 
             'presentGirls', 'presentBoys', 'absentGirls', 'absentBoys', 
-            'initials', 'staff_data', 'staff_attendance'
+            'initials', 'staff_data', 'staff_attendance', 'unreadNotice'
         ));
+    }
+
+    public function markNoticeAsRead($noticeId)
+    {
+        $userId = Auth::id();
+        NoticeView::create([
+            'notice_id' => $noticeId,
+            'user_id' => $userId,
+            'viewed_at' => now(),
+        ]);
+
+        return response()->json(['success' => true]);
     }
 
     private function getClassWiseStudents()

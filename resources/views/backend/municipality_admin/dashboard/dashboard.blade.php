@@ -589,45 +589,35 @@
                     </div>
                 </div>
             </div>
-         
-          
+
+            <div class="col-xl-4 mb-50">
+                <div class="bg-white widget-style1 border-radius-10 height-100-p box-shadow">
+                    <div class="d-flex flex-wrap align-items-center">
+                        <div class="circle-icon">
+                            <div class="icon border-radius-100 font-24 text-blue"><i class="fa-solid fa-bell"></i></div>
+                        </div>
+                        <div class="widget-data">
+                            <div class="weight-800 font-18">{{ $noticeCount }}</div>
+                            <div class="weight-500">Municipality Notices</div>
+                        </div>
+                    </div>
+                </div>
+            </div>      
+            
+            <div class="col-xl-4 mb-50">
+                <div class="bg-white widget-style1 border-radius-10 height-100-p box-shadow">
+                    <div class="d-flex flex-wrap align-items-center">
+                        <div class="circle-icon">
+                            <div class="icon border-radius-100 font-24 text-blue"><i class="fa-solid fa-bell"></i></div>
+                        </div>
+                        <div class="widget-data">
+                            <div class="weight-800 font-18">{{ $ECACount }}</div>
+                            <div class="weight-500">Municipality ECA</div>
+                        </div>
+                    </div>
+                </div>
+            </div>      
         </div>
-
-
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>S.N.</th>
-                    <th>Schools</th>
-                    <th>Address</th>
-                    <th>Total Students</th>
-                    <th>Present Student</th>
-                    <th>Absent Student</th>
-                  
-                    <th>Total Staff</th>
-                    <th>Present Staff</th>
-                    <th>Absent Staff</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($schoolData as $school)
-                <tr>
-            <td>{{ $loop->iteration }}</td>
-            <td>{{ $school['school_name'] }}</td>
-            <td>{{ $school['school_address'] }}</td>
-            <td>{{ $school['total_students'] }}</td>
-            <td>{{ $school['present_students'] }}</td>
-            <td>{{ $school['absent_students'] }}</td>
-            <td>{{ $school['total_staffs'] }}</td>
-            <td>{{ $school['present_staffs'] }}</td>
-            <td>{{ $school['absent_staffs'] }}</td>
-                   
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-
-
 
         {{-- @foreach ($schoolData as $school)
         <div>
@@ -739,6 +729,39 @@
             </div>
         </div>
     </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>S.N.</th>
+                <th>Schools</th>
+                <th>Address</th>
+                <th>Total Students</th>
+                <th>Present Student</th>
+                <th>Absent Student</th>
+              
+                <th>Total Staff</th>
+                <th>Present Staff</th>
+                <th>Absent Staff</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($schoolData as $school)
+            <tr>
+        <td>{{ $loop->iteration }}</td>
+        <td>{{ $school['school_name'] }}</td>
+        <td>{{ $school['school_address'] }}</td>
+        <td>{{ $school['total_students'] }}</td>
+        <td>{{ $school['present_students'] }}</td>
+        <td>{{ $school['absent_students'] }}</td>
+        <td>{{ $school['total_staffs'] }}</td>
+        <td>{{ $school['present_staffs'] }}</td>
+        <td>{{ $school['absent_staffs'] }}</td>
+               
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
 
 @section('scripts')
     @include('backend.includes.nepalidate')
