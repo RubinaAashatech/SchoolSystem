@@ -33,9 +33,9 @@ class DashboardController extends Controller
         $this->schoolService = $schoolService;
     }
 
-    public function index(Request $request)
-    {
-        $user = Auth::user();
+  public function index(Request $request)
+{
+    $user = Auth::user();
     $schoolName = $user->f_name;
 
     // Calculate initials from the school name
@@ -66,15 +66,12 @@ class DashboardController extends Controller
     $classWiseData = StudentSession::where('school_id', $schoolId)
         ->where('is_active', 1)
         ->with([
-            'classg',
-            'section',
             'studentAttendances' => function ($query) use ($nepaliDateToday) {
                 $query->whereDate('date', $nepaliDateToday);
             },
             'student.user'
         ])
-        ->get()
-        ->groupBy(['class_id', 'section_id']);
+        ->get();
 
     // Initialize total present and absent counts for boys and girls
     $totalPresentBoys = 0;
@@ -83,26 +80,21 @@ class DashboardController extends Controller
     $totalAbsentGirls = 0;
 
     // Process class-wise attendance data
-    foreach ($classWiseData as $classId => $sections) {
-        foreach ($sections as $sectionId => $sessions) {
-            foreach ($sessions as $session) {
-                $gender = $session->student->user->gender ?? 'Unknown';
-
-                $attendance = $session->studentAttendances->first();
-                if ($attendance) {
-                    if ($attendance->attendance_type_id == 1) { // Present
-                        if ($gender == 'Male') {
-                            $totalPresentBoys++;
-                        } elseif ($gender == 'Female') {
-                            $totalPresentGirls++;
-                        }
-                    } elseif ($attendance->attendance_type_id == 2) { // Absent
-                        if ($gender == 'Male') {
-                            $totalAbsentBoys++;
-                        } elseif ($gender == 'Female') {
-                            $totalAbsentGirls++;
-                        }
-                    }
+    foreach ($classWiseData as $session) {
+        $attendance = $session->studentAttendances->first();
+        if ($attendance) {
+            $gender = strtolower($session->student->user->gender ?? 'unknown');
+            if ($attendance->attendance_type_id == 1) { // Present
+                if ($gender == 'male') {
+                    $totalPresentBoys++;
+                } elseif ($gender == 'female') {
+                    $totalPresentGirls++;
+                }
+            } elseif ($attendance->attendance_type_id == 2) { // Absent
+                if ($gender == 'male') {
+                    $totalAbsentBoys++;
+                } elseif ($gender == 'female') {
+                    $totalAbsentGirls++;
                 }
             }
         }
@@ -125,30 +117,24 @@ class DashboardController extends Controller
         })
         ->whereDate('date', $nepaliDateToday)->count();
 
-        $page_title = Auth::user()->getRoleNames()[0] . ' ' . "Dashboard";
+    $page_title = Auth::user()->getRoleNames()[0] . ' ' . "Dashboard";
 
-        $class_wise_students = $this->getClassWiseStudents();
-        $class_wise_student_attendances = $this->getClassWiseStudentAttendance();
-        $staff_data = $this->getStaffData();
-        $staff_attendance = $this->getStaffAttendanceData();
+    // Additional data fetches (if any services are being used)
+    $class_wise_students = $this->getClassWiseStudents();
+    $class_wise_student_attendances = $this->getClassWiseStudentAttendance();
+    $staff_data = $this->getStaffData();
+    $staff_attendance = $this->getStaffAttendanceData();
 
-        // return view('backend.school_admin.dashboard.dashboard', compact(
-        //     'page_title', 'class_wise_student_attendances', 'class_wise_students', 
-        //     'totalStudents', 'presentStudents', 'absentStudents', 'totalStaffs', 
-        //     'presentStaffs', 'absentStaffs', 'totalGirls', 'totalBoys', 
-        //     'presentGirls', 'presentBoys', 'absentGirls', 'absentBoys', 
-        //     'initials', 'staff_data', 'staff_attendance'
-        // ));
-        return view('backend.school_admin.dashboard.dashboard', compact(
-            'page_title', 'totalStudents', 'totalGirls', 'totalBoys', 
-            'totalPresentBoys', 'totalPresentGirls', 'totalAbsentBoys', 
-            'totalAbsentGirls', 'presentStudents', 'absentStudents',
-            'totalStaffs', 'presentStaffs', 'absentStaffs', 'initials','staff_attendance',
-            'staff_data', 'class_wise_student_attendances', 'class_wise_students'
-        ));
+    // Return view with compacted data
+    return view('backend.school_admin.dashboard.dashboard', compact(
+        'page_title', 'totalStudents', 'totalGirls', 'totalBoys',
+        'totalPresentBoys', 'totalPresentGirls', 'totalAbsentBoys',
+        'totalAbsentGirls', 'presentStudents', 'absentStudents',
+        'totalStaffs', 'presentStaffs', 'absentStaffs', 'initials',
+        'staff_attendance', 'staff_data', 'class_wise_student_attendances', 'class_wise_students'
+    ));
+}
 
-
-    }
 
     private function getClassWiseStudents()
 {
