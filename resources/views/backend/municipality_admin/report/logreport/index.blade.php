@@ -8,8 +8,28 @@
         </div>
     </div>
     <div class="row mb-3">
-        <div class="col-12">
-            <input type="text" id="custom_search" class="form-control" placeholder="Search by school name or major incidents">
+        <div class="col-md-2">
+            <select id="school_filter" class="form-control">
+                <option value="">Select School</option>
+                @foreach($schools as $school)
+                    <option value="{{ $school->id }}">{{ $school->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input type="text" id="custom_search" class="form-control" placeholder="Search">
+        </div>
+        <div class="col-md-2">
+            <input type="text" id="nepali-datepicker" class="form-control nepali-date" placeholder="Start Date (YYYY-MM-DD)">
+        </div>
+        <div class="col-md-2">
+            <input type="text" id="nepali-datepicker2" class="form-control nepali-date" placeholder="End Date (YYYY-MM-DD)">
+        </div>
+        <div class="col-md-2">
+            <button id="search_button" class="btn btn-primary">Search</button>
+        </div>
+        <div class="col-md-2">
+            <button id="export_excel" class="btn btn-success">Export to Excel</button>
         </div>
     </div>
     <div class="row">
@@ -37,39 +57,65 @@
 @endsection
 
 @section('scripts')
-<script>
-$(function() {
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
+@include('backend.includes.nepalidate')
+<script type="text/javascript">
+    $(document).ready(function() {
+        var table = $('#municipality_head_teacherlogs_table').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: "{{ route('admin.municipality-headteacher-logs.get') }}",
+                data: function(d) {
+                    d.school_id = $('#school_filter').val();
+                    d.start_date = $('#nepali-datepicker').val();
+                    d.end_date = $('#nepali-datepicker2').val();
+                    d.search = $('#custom_search').val();
+                }
+            },
+            columns: [
+                {data: 'id', name: 'id'},
+                {data: 'school_name', name: 'schools.name'},
+                {data: 'major_incidents', name: 'head_teacher_logs.major_incidents'},
+                {data: 'major_work_observation', name: 'head_teacher_logs.major_work_observation'},
+                {data: 'assembly_management', name: 'head_teacher_logs.assembly_management'},
+                {data: 'miscellaneous', name: 'head_teacher_logs.miscellaneous'},
+                {data: 'logged_date', name: 'head_teacher_logs.logged_date'},
+            ]
+        });
 
-    var table = $('#municipality_head_teacherlogs_table').DataTable({
-        processing: true,
-        serverSide: true,
-        ajax: {
-            url: "{{ route('admin.municipality-headteacher-logs.get') }}",
-            error: function (xhr, error, thrown) {
-                console.error('DataTables Ajax error:', error);
-                console.error('Status:', xhr.status);
-                console.error('Response:', xhr.responseText);
+        $('#search_button').on('click', function() {
+            table.draw();
+        });
+
+        $('#custom_search').on('keyup', function() {
+            table.draw();
+        });
+
+        $('#school_filter').on('change', function() {
+            table.draw();
+        });
+
+        $(document).on('keypress', function(e) {
+            if (e.which == 13) {
+                e.preventDefault();
+                $('#search_button').click();
             }
-        },
-        columns: [
-            {data: 'id', name: 'id'},
-            {data: 'school_name', name: 'schools.name'},
-            {data: 'major_incidents', name: 'head_teacher_logs.major_incidents'},
-            {data: 'major_work_observation', name: 'head_teacher_logs.major_work_observation'},
-            {data: 'assembly_management', name: 'head_teacher_logs.assembly_management'},
-            {data: 'miscellaneous', name: 'head_teacher_logs.miscellaneous'},
-            {data: 'logged_date', name: 'head_teacher_logs.logged_date'},
-        ]
-    });
+        });
 
-    $('#custom_search').on('keyup', function() {
-        table.search(this.value).draw();
+        $('#export_excel').on('click', function() {
+            var school_id = $('#school_filter').val();
+            var start_date = $('#nepali-datepicker').val();
+            var end_date = $('#nepali-datepicker2').val();
+            var search = $('#custom_search').val();
+
+            var url = "{{ route('admin.municipality-headteacher-logs.export') }}?" +
+                      "school_id=" + school_id +
+                      "&start_date=" + start_date +
+                      "&end_date=" + end_date +
+                      "&search=" + search;
+
+            window.location.href = url;
+        });
     });
-});
 </script>
 @endsection
