@@ -323,6 +323,11 @@
                                             // Check if the attendance type ID is 1, 2, or 4
                                             if (attendance_type.id === 1 || attendance_type.id === 2 || attendance_type.id === 4) {
                                                 var isChecked = student.attendance_type_id == attendance_type.id || (student.attendance_type_id === undefined && attendance_type.id == 1);
+
+                                                // For the class to hide the button of Holiday
+                                                
+
+
                                                 row += '<label for="attendance_type_' +
                                                     student.id + '_' + attendance_type.id +
                                                     '" class="attendance-radio">' +

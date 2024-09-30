@@ -47,16 +47,23 @@ class DashboardController extends Controller
 
     $schoolId = Auth::user()->school_id;
 
-    // Count total students, boys, and girls
-    $totalStudents = Student::where('school_id', $schoolId)->count();
-    $totalGirls = Student::where('school_id', $schoolId)
-        ->whereHas('user', function ($query) {
+    $totalStudents = StudentSession::where('school_id', $schoolId)
+    ->where('is_active', 1)
+    ->count();
+
+    $totalGirls = StudentSession::where('school_id', $schoolId)
+        ->where('is_active', 1)
+        ->whereHas('student.user', function ($query) {
             $query->where('gender', 'female');
-        })->count();
-    $totalBoys = Student::where('school_id', $schoolId)
-        ->whereHas('user', function ($query) {
+        })
+        ->count();
+
+    $totalBoys = StudentSession::where('school_id', $schoolId)
+        ->where('is_active', 1)
+        ->whereHas('student.user', function ($query) {
             $query->where('gender', 'male');
-        })->count();
+        })
+        ->count();
 
     // Convert today's date to Nepali date
     $today = Carbon::today()->format('Y-m-d');
