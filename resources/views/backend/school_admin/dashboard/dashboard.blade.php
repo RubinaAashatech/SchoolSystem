@@ -591,43 +591,28 @@
                         </div>
                     </div>
                 </div>
-            </div>   
-        </div>
-        </div>
-        
-
-
-        {{-- <div class="card mb-4">
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-md-2">
-                        <h5>Total Students</h5>
-                        <p id="totalStudents">0</p>
+            </div>  
+            
+            <div class="col-xl-3 mb-50">
+                <a href="{{ route('admin.notices.index') }}" class="text-decoration-none">
+                    <div class="bg-white box-shadow border-radius-10 height-100-p widget-style1">
+                        <div class="d-flex flex-wrap align-items-center">
+                            <div class="circle-icon">
+                                <div class="icon border-radius-100 font-24 text-blue">
+                                    <i class="fa-solid fa-bell"></i>
+                                </div>
+                            </div>
+                            <div class="widget-data">
+                                <div class="weight-800 font-18">{{ $noticeCount }}</div>
+                                <div class="weight-500">Municipality Notice</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-2">
-                        <h5>Present Students</h5>
-                        <p id="presentStudents">0</p>
-                    </div>
-                    <div class="col-md-2">
-                        <h5>Absent Students</h5>
-                        <p id="absentStudents">0</p>
-                    </div>
-                    <div class="col-md-2">
-                        <h5>Total Staffs</h5>
-                        <p id="totalStaffs">0</p>
-                    </div>
-                    <div class="col-md-2">
-                        <h5>Present Staffs</h5>
-                        <p id="presentStaffs">0</p>
-                    </div>
-                    <div class="col-md-2">
-                        <h5>Absent Staffs</h5>
-                        <p id="absentStaffs">0</p>
-                    </div>
-                </div>
+                </a>
             </div>
-        </div> --}}
-            <!-- Existing styles and cards remain unchanged -->
+            
+        </div>
+        </div>
         
             <div class="card">
                 <div class="card-body">

@@ -142,19 +142,35 @@ class DashboardController extends Controller
         $class_wise_student_attendances = $this->getClassWiseStudentAttendance();
         $staff_data = $this->getStaffData();
         $staff_attendance = $this->getStaffAttendanceData();
+        $noticeData = $this->fetchMunicipalityNoticeData();
         $unreadNotice = Notice::getUnreadNoticesForSchool();
         if ($unreadNotice) {
             $this->markNoticeAsRead($unreadNotice->id, Auth::id());
         }
-        
+        $noticeCount = $noticeData['count'];
 
         return view('backend.school_admin.dashboard.dashboard', compact(
             'page_title', 'class_wise_student_attendances', 'class_wise_students', 
             'totalStudents', 'presentStudents', 'absentStudents', 'totalStaffs', 
             'presentStaffs', 'absentStaffs', 'totalGirls', 'totalBoys', 
             'presentGirls', 'presentBoys', 'absentGirls', 'absentBoys', 
-            'initials', 'staff_data', 'staff_attendance', 'unreadNotice'
+            'initials', 'staff_data', 'staff_attendance', 'unreadNotice',
+            'noticeCount' 
         ));
+    }
+
+    private function fetchMunicipalityNoticeData()
+    {
+        $municipalityId = Auth::user()->municipality_id; 
+        $notices = Notice::whereHas('creator', function($query) {
+            $query->where('user_type_id', 3); 
+        })->get();
+    
+        $count = $notices->count();
+    
+        return [
+            'count' => $count,
+        ];
     }
 
     public function markNoticeAsRead($noticeId)
