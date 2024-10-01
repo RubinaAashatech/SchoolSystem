@@ -71,7 +71,6 @@
                                     <input class="form-check-input" type="checkbox" name="send_to[]" value="school_group_head" id="school_group_head">
                                     <label class="form-check-label" for="school_group_head">School Group Head</label>
                                 </div>
-                            @endif
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="send_to[]" value="teacher" id="teacher">
                                 <label class="form-check-label" for="teacher">Teachers</label>
@@ -84,6 +83,22 @@
                                 <input class="form-check-input" type="checkbox" name="send_to[]" value="student" id="student">
                                 <label class="form-check-label" for="student">Students</label>
                             </div>
+                            @endif
+                            @if($user_type == 'school_admin')
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="send_to[]" value="teacher" id="teacher">
+                            <label class="form-check-label" for="teacher">Teachers</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="send_to[]" value="parent" id="parent">
+                            <label class="form-check-label" for="parent">Parents</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="send_to[]" value="student" id="student">
+                            <label class="form-check-label" for="student">Students</label>
+                        </div>
+                        @endif
+
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -94,7 +109,26 @@
             </div>
         </div>
     </div>
+    
+    <!-- View Notice Modal -->
+    <div class="modal fade" id="viewNoticeModal" tabindex="-1" aria-labelledby="viewNoticeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewNoticeModalLabel">View Notice</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="viewNoticeContent">
+                    <!-- Content will be dynamically inserted here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
 @endsection
 
 @section('scripts')
@@ -121,10 +155,11 @@
                     render: function(data, type, row) {
                         return data.split(' ')[0]; 
                     }
-                 },
+                },
                 { data: 'send_to', name: 'send_to' },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ]
+
         });
 
         var releaseDateInput = document.getElementById("dynamic_release_date");
@@ -196,5 +231,43 @@
         $('#createNoticeLabel').text('Add Notice');
         $('#createNotice').modal('show');
     });
+
+    $(document).on('click', '.viewNotice', function(e) {
+    e.preventDefault();
+    var id = $(this).data('id');
+
+    $.get("{{ url('admin/notices') }}/" + id, function(response) {
+        var notice = response.notice;
+        var content = `
+            <h5>${notice.title}</h5>
+            <p>${notice.description}</p>
+        `;
+
+        if (notice.pdf_image) {
+            var fileExtension = notice.pdf_image.split('.').pop().toLowerCase();
+            var filePath = "{{ asset('storage') }}/" + notice.pdf_image; 
+
+            if (fileExtension === 'pdf') {
+                content += `
+                    <div class="pdf-container" style="width: 100%; height: 500px;">
+                        <iframe src="${filePath}" width="100%" height="100%" style="border: none;"></iframe>
+                    </div>
+                `;
+            } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) { 
+                content += `
+                    <div>
+                        <img src="${filePath}" alt="Notice Image" class="img-fluid">
+                    </div>
+                `;
+            } else {
+                content += `<p>File format not supported for preview.</p>`;
+            }
+        }
+
+        $('#viewNoticeContent').html(content);
+        $('#viewNoticeModal').modal('show');
+    });
+});
+var viewModal = new bootstrap.Modal(document.getElementById('viewNoticeModal'));
 </script>
 @endsection

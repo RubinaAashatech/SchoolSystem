@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class NoticeController extends Controller
@@ -35,6 +36,12 @@ class NoticeController extends Controller
         return view('backend.shared.notices.create');
     }
 
+    public function show($id)
+    {
+        $notice = Notice::findOrFail($id);
+        return response()->json(['notice' => $notice]);    
+    }
+
     public function store(Request $request)
     {
         $user = Auth::user();
@@ -50,15 +57,7 @@ class NoticeController extends Controller
         $notice->title = $data['title'];
         $notice->description = $data['description'];
         $notice->notice_released_date = Carbon::parse($data['release_date'])->startOfDay();
-        $whoToSend = $request->send_to;
-    if (in_array('school', $whoToSend)) {
-        $whoToSend = array_diff($whoToSend, ['school']);
-        $whoToSend[] = 'school_admin';
-    }
-    $notice->notice_who_to_send = json_encode($whoToSend);
-    
-    Log::info("Creating new notice: " . json_encode($notice->toArray()));
-        Log::info("Creating new notice: " . json_encode($notice->toArray()));
+        $notice->notice_who_to_send = json_encode($data['send_to']);
         $notice->created_by = $user->user_type === 'municipality' ? 'municipality' : $user->id;
 
         if ($request->hasFile('pdf_image')) {
@@ -128,7 +127,7 @@ class NoticeController extends Controller
     
         try {
             $user = Auth::user();
-            $userType = $user->user_type;
+            $userType = $user->user_type_id;
     
             $notices = Notice::select(['id', 'title', 'description', 'notice_released_date', 'notice_who_to_send', 'created_by']);
     
@@ -162,6 +161,8 @@ class NoticeController extends Controller
                         ($notice->created_by == $user->id)) {
                         $actions .= '<button class="btn btn-primary btn-sm editNotice" data-id="' . $notice->id . '">Edit</button> ';
                         $actions .= '<button class="btn btn-danger btn-sm deleteNotice" data-id="' . $notice->id . '">Delete</button>';
+                    } else {
+                        $actions .= '<button class="btn btn-info btn-sm viewNotice" data-id="' . $notice->id . '">View</button>';
                     }
                     return $actions;
                 })
@@ -171,6 +172,17 @@ class NoticeController extends Controller
             Log::error('Error in getNotices: ' . $e->getMessage());
             return response()->json(['error' => 'An error occurred while processing your request.'], 500);
         }
+    }
+
+    private function userCanViewNotice($user, $notice)
+    {
+        $userType = $this->getUserType();
+        $sendTo = json_decode($notice->notice_who_to_send, true);
+
+        return $notice->created_by == 'municipality' ||
+               $notice->created_by == $user->id ||
+               $notice->created_by == $user->school_id ||
+               in_array($userType, $sendTo);
     }
 
     public function markAsRead(Request $request, $noticeId)
@@ -183,4 +195,5 @@ class NoticeController extends Controller
     
         return response()->json(['success' => true]);
     }
+
 }

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 class Notice extends Model
 {
     use HasFactory;
@@ -53,7 +54,7 @@ public function municipality()
     
     Log::info("User type ID: {$userTypeId}");
 
-    $userType = \DB::table('user_types')->where('id', $userTypeId)->value('title');
+    $userType = DB::table('user_types')->where('id', $userTypeId)->value('title');
     Log::info("User type: {$userType}");
 
     $query = self::where(function ($query) use ($userType) {
