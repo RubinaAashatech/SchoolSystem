@@ -122,6 +122,17 @@ class RouteServiceProvider extends ServiceProvider
                         require_once $file->getRealPath();
                     }
                 });
+
+                Route::middleware(['web', 'auth', 'userAttributes', 'adminRoleAccess', 'adminPermissionAccess'])
+                ->prefix('admin')->name('admin.')
+                ->namespace($this->namespace . '\Staff')
+                ->group(function () {
+                    $files = File::allFiles(base_path('routes' . DIRECTORY_SEPARATOR . 'staff'));
+                    foreach ($files as $file) {
+                        //dd($file->getRealPath());
+                        require_once $file->getRealPath();
+                    }
+                });
         });
     }
 }

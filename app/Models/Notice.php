@@ -44,29 +44,37 @@ public function municipality()
         return $this->hasMany(NoticeView::class);
     }
 
-    public static function getUnreadNoticesForSchool()
-    {
-        $schoolId = Auth::id();
-        Log::info("Fetching unread notices for school ID: {$schoolId}");
+    public static function getUnreadNoticesForUser($userId)
+{
+    Log::info("Fetching unread notices for user ID: {$userId}");
     
-        $unreadNotice = self::where('created_by', 3)
-            ->latest()
-            ->first();
+    $user = User::findOrFail($userId);
+    $userTypeId = $user->user_type_id;
     
-        if ($unreadNotice) {
-            $alreadyViewed = NoticeView::where('notice_id', $unreadNotice->id)
-                ->where('user_id', $schoolId)
-                ->exists();
-    
-            Log::info('Already viewed by school: ' . ($alreadyViewed ? 'Yes' : 'No'));
-    
-            if (!$alreadyViewed) {
-                Log::info('Unread notice found: ' . $unreadNotice->id);
-                return $unreadNotice;
-            }
-        }
-        Log::info('No unread notices found.');
-        return null;
-    }   
+    Log::info("User type ID: {$userTypeId}");
 
+    $userType = \DB::table('user_types')->where('id', $userTypeId)->value('title');
+    Log::info("User type: {$userType}");
+
+    $query = self::where(function ($query) use ($userType) {
+            $query->whereJsonContains('notice_who_to_send', $userType)
+                  ->orWhereJsonContains('notice_who_to_send', 'school');
+        })
+        ->whereDoesntHave('views', function ($query) use ($userId) {
+            $query->where('user_id', $userId);
+        })
+        ->latest();
+
+    Log::info("SQL Query: " . $query->toSql());
+    Log::info("Query Bindings: " . json_encode($query->getBindings()));
+
+    $unreadNotices = $query->get();
+
+    Log::info("Unread notices count: " . $unreadNotices->count());
+    foreach ($unreadNotices as $notice) {
+        Log::info("Unread notice: ID {$notice->id}, Title: {$notice->title}, Who to send: " . $notice->notice_who_to_send);
+    }
+
+    return $unreadNotices;
+}
 }

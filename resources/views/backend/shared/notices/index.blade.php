@@ -58,7 +58,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="dynamic_release_date" class="form-label">Release Date<span class="must">*</span></label>
-                            <input type="date" value="{{ old('release_date', date('Y-m-d')) }}" name="release_date" class="form-control" id="dynamic_release_date" required>
+                            <input type="text" name="release_date" class="form-control" id="dynamic_release_date" required readonly>
                         </div>
                         <div class="mb-3">
                             <label for="send_to" class="form-label">Send To<span class="must">*</span></label>
@@ -98,6 +98,7 @@
 @endsection
 
 @section('scripts')
+@include('backend.includes.nepalidate')
 <script>
     $(document).ready(function () {
         $('#notices-table').DataTable({
@@ -114,11 +115,31 @@
                 { data: 'id', name: 'id' },
                 { data: 'title', name: 'title' },
                 { data: 'description', name: 'description' },
-                { data: 'release_date', name: 'release_date' },
+                { 
+                    data: 'release_date', 
+                    name: 'release_date',
+                    render: function(data, type, row) {
+                        return data.split(' ')[0]; 
+                    }
+                 },
                 { data: 'send_to', name: 'send_to' },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ]
         });
+
+        var releaseDateInput = document.getElementById("dynamic_release_date");
+        if (releaseDateInput) {
+            releaseDateInput.nepaliDatePicker({
+                dateFormat: "YYYY-MM-DD",
+                ndpYear: true,
+                ndpMonth: true,
+                ndpYearCount: 200
+            });
+
+            var today = NepaliFunctions.GetCurrentBsDate();
+            var formattedDate = NepaliFunctions.ConvertDateFormat(today, "YYYY-MM-DD");
+            releaseDateInput.value = formattedDate;
+        }
     });
 
     $(document).on('click', '.editNotice', function () {
@@ -129,7 +150,7 @@
             $('#dynamic_id').val(id);
             $('#dynamic_title').val(data.title);
             $('#dynamic_description').val(data.description);
-            $('#dynamic_release_date').val(data.notice_released_date);
+            $('#dynamic_release_date').val(data.notice_released_date.split(' ')[0]);
             var sendTo = JSON.parse(data.notice_who_to_send);
             $('input[name="send_to[]"]').prop('checked', false);
             sendTo.forEach(function (item) {
@@ -144,27 +165,26 @@
     });
 
     $(document).on('click', '.deleteNotice', function () {
-    var id = $(this).data('id');
-    
-    if (confirm('Are you sure you want to delete this notice?')) {
-        $.ajax({
-            url: '{{ route('admin.notices.destroy', '') }}' + '/' + id,
-            type: 'DELETE',
-            data: {
-                "_token": "{{ csrf_token() }}",
-            },
-            success: function (response) {
-                if (response.success) {
-                    $('#notices-table').DataTable().ajax.reload();
+        var id = $(this).data('id');
+        
+        if (confirm('Are you sure you want to delete this notice?')) {
+            $.ajax({
+                url: '{{ route('admin.notices.destroy', '') }}' + '/' + id,
+                type: 'DELETE',
+                data: {
+                    "_token": "{{ csrf_token() }}",
+                },
+                success: function (response) {
+                    if (response.success) {
+                        $('#notices-table').DataTable().ajax.reload();
+                    }
+                },
+                error: function (xhr) {
+                    alert('Error deleting notice');
                 }
-            },
-            error: function (xhr) {
-                alert('Error deleting notice');
-            }
-        });
-    }
-});
-
+            });
+        }
+    });
 
     // Add a click event for the "Add Notice" button
     $(document).on('click', '#addNoticeBtn', function() {

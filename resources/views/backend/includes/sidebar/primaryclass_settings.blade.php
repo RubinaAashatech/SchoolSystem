@@ -1,4 +1,4 @@
-@hasanyrole('School Admin')
+@hasanyrole('School Admin|Staff')
     <li class="nav-item">
         {{-- <hr class="my-4"> --}}
         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">

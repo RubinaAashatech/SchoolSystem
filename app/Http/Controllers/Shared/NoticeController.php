@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Shared;
 use App\Http\Controllers\Controller;
 use App\Models\Notice;
 use App\Models\NoticeView;
+use App\Models\NepaliDate;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class NoticeController extends Controller
 {
@@ -39,7 +41,7 @@ class NoticeController extends Controller
         $data = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'release_date' => 'required|date',
+            'release_date' => 'required|date_format:Y-m-d',
             'send_to' => 'required|array',
             'pdf_image' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
@@ -47,8 +49,16 @@ class NoticeController extends Controller
         $notice = new Notice();
         $notice->title = $data['title'];
         $notice->description = $data['description'];
-        $notice->notice_released_date = $data['release_date'];
-        $notice->notice_who_to_send = json_encode($data['send_to']);
+        $notice->notice_released_date = Carbon::parse($data['release_date'])->startOfDay();
+        $whoToSend = $request->send_to;
+    if (in_array('school', $whoToSend)) {
+        $whoToSend = array_diff($whoToSend, ['school']);
+        $whoToSend[] = 'school_admin';
+    }
+    $notice->notice_who_to_send = json_encode($whoToSend);
+    
+    Log::info("Creating new notice: " . json_encode($notice->toArray()));
+        Log::info("Creating new notice: " . json_encode($notice->toArray()));
         $notice->created_by = $user->user_type === 'municipality' ? 'municipality' : $user->id;
 
         if ($request->hasFile('pdf_image')) {
@@ -59,11 +69,11 @@ class NoticeController extends Controller
         $notice->save();
 
         return redirect()->route('admin.notices.index')->with('success', 'Notice created successfully.');
-    
     }
 
     public function edit(Notice $notice)
     {
+        $notice->notice_released_date = Carbon::parse($notice->notice_released_date)->toDateString();
         return response()->json($notice);
     }
 
@@ -72,7 +82,7 @@ class NoticeController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'release_date' => 'required|date',
+            'release_date' => 'required|date_format:Y-m-d',
             'send_to' => 'required|array',
             'send_to.*' => 'in:school,teacher,parent,student,school_group_head',
             'pdf_image' => 'nullable|mimes:pdf,jpeg,png,jpg|max:2048',
@@ -80,7 +90,7 @@ class NoticeController extends Controller
 
         $data = $request->all();
         $data['notice_who_to_send'] = json_encode($request->send_to);
-        $data['notice_released_date'] = $request->release_date;
+        $data['notice_released_date'] = Carbon::parse($request->release_date)->startOfDay();
 
         if ($request->hasFile('pdf_image')) {
             $data['pdf_image'] = $request->file('pdf_image')->store('notices');
@@ -92,23 +102,23 @@ class NoticeController extends Controller
     }
 
     public function destroy(Notice $notice)
-{
-    try {
-        $notice->delete();
-        if (request()->ajax()) {
-            return response()->json(['success' => true], 200); 
+    {
+        try {
+            $notice->delete();
+            if (request()->ajax()) {
+                return response()->json(['success' => true], 200); 
+            }
+
+            return redirect()->route('admin.notices.index')->with('success', 'Notice deleted successfully.');
+
+        } catch (\Exception $e) {
+            if (request()->ajax()) {
+                return response()->json(['error' => 'Error deleting notice'], 500); 
+            }
+
+            return redirect()->route('admin.notices.index')->with('error', 'Error deleting notice.');
         }
-
-        return redirect()->route('admin.notices.index')->with('success', 'Notice deleted successfully.');
-
-    } catch (\Exception $e) {
-        if (request()->ajax()) {
-            return response()->json(['error' => 'Error deleting notice'], 500); 
-        }
-
-        return redirect()->route('admin.notices.index')->with('error', 'Error deleting notice.');
     }
-}
 
     public function getNotices(Request $request)
     {
@@ -140,7 +150,7 @@ class NoticeController extends Controller
     
             return DataTables::of($notices)
                 ->addColumn('release_date', function ($notice) {
-                    return $notice->notice_released_date ? $notice->notice_released_date->format('Y-m-d') : '';
+                    return $notice->notice_released_date;
                 })
                 ->addColumn('send_to', function ($notice) {
                     $sendTo = json_decode($notice->notice_who_to_send, true);
@@ -162,22 +172,15 @@ class NoticeController extends Controller
             return response()->json(['error' => 'An error occurred while processing your request.'], 500);
         }
     }
-    public function markNoticeAsRead($noticeId, $userId)
-{
 
-    $existingView = NoticeView::where('notice_id', $noticeId)
-        ->where('user_id', $userId)
-        ->first();
-
-    if (!$existingView) {
-    
-        NoticeView::create([
+    public function markAsRead(Request $request, $noticeId)
+    {
+        $userId = Auth::id();
+        NoticeView::firstOrCreate([
             'notice_id' => $noticeId,
             'user_id' => $userId,
-            'viewed_at' => now(),
-        ]);
-    } else {
-        Log::info("Notice {$noticeId} was already marked as read for user {$userId}");
+        ], ['viewed_at' => now()]);
+    
+        return response()->json(['success' => true]);
     }
-}      
 }

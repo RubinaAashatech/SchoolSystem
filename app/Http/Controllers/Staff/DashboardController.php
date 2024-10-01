@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\SchoolAdmin;
+namespace App\Http\Controllers\Staff;
 
 use Illuminate\Support\Facades\Auth;
 use App\Models\Unit;
@@ -255,11 +255,6 @@ private function getClassWiseStudentAttendance()
         ]
     ];
 }
-
-
-
-
-
 
     private function getStaffData()
     {

@@ -1,4 +1,4 @@
-@hasanyrole('Super Admin|District Admin|Municipality Admin|Head School|School Admin')
+@hasanyrole('Super Admin|District Admin|Municipality Admin|Head School|School Admin|Staff')
 <li class="nav-item">
     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
         <div class="col-auto navbar-vertical-label">{{ __('Notice Board') }}</div>
@@ -15,7 +15,7 @@
             <span class="nav-link-text ps-1">{{ __("Notice Board") }}</span>
         </div>
     </a>
-    <ul class="nav collapse {{ Request::segment(2) == 'notice-head' || Request::segment(2) == 'notice-board' || Request::segment(2) == 'extraactivities_participate' ? 'show' : '' }}" id="dashboard12">
+    <ul class="nav collapse {{ Request::segment(2) == 'notice-head' ? 'show' : '' }}" id="dashboard12">
         @can('list_notice_head')
             <li class="nav-item">
                 <a class="nav-link {{ Request::segment(2) == 'notice' ? 'active' : '' }}"

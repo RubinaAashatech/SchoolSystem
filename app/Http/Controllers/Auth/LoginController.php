@@ -47,15 +47,15 @@ class LoginController extends Controller
             case 'School Admin':
                 return route('admin.schoolAdmin.dashboard');
             case 'Teacher':
-                return route('admin.teacher.dashboard');
+                return route('admin.staff.dashboard');
             case 'Accountant':
-                return route('admin.accountant.dashboard');
+                return route('admin.staff.dashboard');
             case 'Librarian':
-                return route('admin.librarian.dashboard');
+                return route('admin.staff.dashboard');
             case 'Principal':
-                return route('admin.principal.dashboard');
+                return route('admin.staff.dashboard');
             case 'Receptionist':
-                return route('admin.receptionist.dashboard');
+                return route('admin.staff.dashboard');
             case 'Student':
                 return route('admin.student.dashboard');
 

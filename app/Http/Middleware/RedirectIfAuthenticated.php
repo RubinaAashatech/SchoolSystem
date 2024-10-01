@@ -37,17 +37,19 @@ class RedirectIfAuthenticated
                     case 'School Admin':
                         return new RedirectResponse(route('admin.schoolAdmin.dashboard'));
                     case 'Teacher':
-                        return new RedirectResponse(route('admin.teacher.dashboard'));
+                        return new RedirectResponse(route('admin.staff.dashboard'));                        
                     case 'Accountant':
-                        return new RedirectResponse(route('admin.accountant.dashboard'));
+                        return new RedirectResponse(route('admin.staff.dashboard'));
                     case 'Librarian':
-                        return new RedirectResponse(route('admin.librarian.dashboard'));
+                        return new RedirectResponse(route('admin.staff.dashboard'));
                     case 'Principal':
-                        return new RedirectResponse(route('admin.principal.dashboard'));
+                        return new RedirectResponse(route('admin.staff.dashboard'));
                     case 'Receptionist':
-                        return new RedirectResponse(route('admin.receptionist.dashboard'));
+                        return new RedirectResponse(route('admin.staff.dashboard'));
                     case 'Student':
                         return new RedirectResponse(route('admin.student.dashboard'));
+                    case 'Staff':
+                        return new RedirectResponse(route('admin.staff.dashboard'));
                     default:
                         return redirect(RouteServiceProvider::HOME);
                 }
