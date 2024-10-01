@@ -1,5 +1,5 @@
 
-@hasanyrole('Super Admin|District Admin|Municipality Admin|Head School|School Admin|Staff')
+@hasanyrole('Super Admin|District Admin|Municipality Admin|Head School|School Admin|Teacher')
     <li class="nav-item">
         {{-- <hr class="my-4"> --}}
         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">

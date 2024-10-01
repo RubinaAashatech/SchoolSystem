@@ -47,7 +47,7 @@ class LoginController extends Controller
             case 'School Admin':
                 return route('admin.schoolAdmin.dashboard');
             case 'Teacher':
-                return route('admin.staff.dashboard');
+                return route('admin.teacher.dashboard');
             case 'Accountant':
                 return route('admin.staff.dashboard');
             case 'Librarian':

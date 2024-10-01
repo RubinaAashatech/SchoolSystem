@@ -37,7 +37,7 @@ class RedirectIfAuthenticated
                     case 'School Admin':
                         return new RedirectResponse(route('admin.schoolAdmin.dashboard'));
                     case 'Teacher':
-                        return new RedirectResponse(route('admin.staff.dashboard'));                        
+                        return new RedirectResponse(route('admin.teacher.dashboard'));                        
                     case 'Accountant':
                         return new RedirectResponse(route('admin.staff.dashboard'));
                     case 'Librarian':

@@ -151,7 +151,7 @@ class DashboardController extends Controller
 
         $noticeCount = $noticeData['count'];
 
-        return view('backend.school_admin.dashboard.dashboard', compact(
+        return view('backend.Staff.dashboard.dashboard', compact(
             'page_title', 'class_wise_student_attendances', 'class_wise_students', 
             'totalStudents', 'presentStudents', 'absentStudents', 'totalStaffs', 
             'presentStaffs', 'absentStaffs', 'totalGirls', 'totalBoys', 

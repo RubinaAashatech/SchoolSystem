@@ -422,21 +422,6 @@
                     </div>
                 </div>
             </div>
-
-            <div class="col-xl-3 mb-50">
-                <div class="bg-white box-shadow border-radius-10 height-100-p widget-style1">
-                    <div class="d-flex flex-wrap align-items-center">
-                        <div class="circle-icon">
-                            <div class="icon border-radius-100 font-24 text-blue"><i class="fa-solid fa-people-group"></i></div>
-                        </div>
-                        <div class="widget-data">
-                            <div class="weight-800 font-18">{{ $totalStaffs }}</div>
-                            <div class="weight-500">Total Staffs</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             
             <div class="col-xl-3 mb-50">
                 <div class="bg-white box-shadow border-radius-10 height-100-p widget-style1">
@@ -499,44 +484,6 @@
                     </div>
                 </div>
             </div>
-
-            <div class="col-xl-3 mb-50">
-                <div class="bg-white box-shadow border-radius-10 height-100-p widget-style1">
-                    <div class="d-flex flex-wrap align-items-center">
-                        <div class="circle-icon">
-                            <div class="icon border-radius-100 font-24 text-blue"><i class="fa-solid fa-user"></i></div>
-                        </div>
-                        <div class="widget-data">
-                            <div class="weight-800 font-18">{{ $presentStaffs }}</div>
-                            <div class="weight-500">Present Staffs</div>
-                        </div>
-                        <div class="progress-data">
-                            <div id="chart3"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-3 mb-50">
-                <div class="bg-white widget-style1 border-radius-10 height-100-p box-shadow">
-                    <div class="d-flex flex-wrap align-items-center">
-                        <div class="circle-icon">
-                            <div class="icon border-radius-100 font-24 text-blue"><i class="fa-solid fa-user-minus"></i></div>
-                        </div>
-                        <div class="widget-data">
-                            <div class="weight-800 font-18">{{ $absentStaffs }}</div>
-                            <div class="weight-500">Absent Staffs</div>
-                        </div>
-                        <div class="progress-data">
-                            <div id="chart2"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-           
-
             <div class="col-xl-3 mb-50">
                 <div class="bg-white box-shadow border-radius-10 height-100-p widget-style1">
                     <div class="d-flex flex-wrap align-items-center">

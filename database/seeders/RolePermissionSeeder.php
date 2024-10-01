@@ -27,7 +27,6 @@ class RolePermissionSeeder extends Seeder
             'Principal',
             'Receptionist',
             'Student',
-            'Staff',
         ];
         // Define the list of permissions
         $arrayOfPermissionNames = [
@@ -940,8 +939,8 @@ class RolePermissionSeeder extends Seeder
             'edit_notice_head',
             'delete_notice_head',
 
-    //define permission for School Staff
-        $permissionForStaff = [
+    //define permission for School Teacher
+        $permissionForTeacher = [
             'create_expenses',
             'list_expenses',
             'edit_expenses',
@@ -1201,8 +1200,8 @@ class RolePermissionSeeder extends Seeder
                 case 'School Admin':
                     $role->givePermissionTo($permissionForSchoolAdmin);
                     break;
-                case 'Staff':
-                    $role->givePermissionTo($permissionForStaff);
+                case 'Teacher':
+                    $role->givePermissionTo($permissionForTeacher);
                     break;
                 // Add more cases for other roles as needed
             }
