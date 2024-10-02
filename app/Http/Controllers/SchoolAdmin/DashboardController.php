@@ -143,11 +143,11 @@ class DashboardController extends Controller
         $staff_data = $this->getStaffData();
         $staff_attendance = $this->getStaffAttendanceData();
         $noticeData = $this->fetchMunicipalityNoticeData();
-        $userId = Auth::id();
-        Log::info("Logged in user ID: {$userId}");
+        // $userId = Auth::id();
+        // Log::info("Logged in user ID: {$userId}");
         
-        $unreadNotices = Notice::getUnreadNoticesForUser($userId);
-        Log::info("Unread notices fetched: " . $unreadNotices->count());
+        // $unreadNotices = Notice::getUnreadNoticesForUser($userId);
+        // Log::info("Unread notices fetched: " . $unreadNotices->count());
 
         $noticeCount = $noticeData['count'];
 
@@ -156,7 +156,7 @@ class DashboardController extends Controller
             'totalStudents', 'presentStudents', 'absentStudents', 'totalStaffs', 
             'presentStaffs', 'absentStaffs', 'totalGirls', 'totalBoys', 
             'presentGirls', 'presentBoys', 'absentGirls', 'absentBoys', 
-            'initials', 'staff_data', 'staff_attendance', 'unreadNotices',
+            'initials', 'staff_data', 'staff_attendance', 
             'noticeCount' 
         ));
     }

@@ -5,7 +5,8 @@ namespace App\Http\Controllers\Shared;
 use App\Http\Controllers\Controller;
 use App\Models\Notice;
 use App\Models\NoticeView;
-use App\Models\NepaliDate;
+use App\Models\Role;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Auth;
@@ -28,7 +29,18 @@ class NoticeController extends Controller
     {
         $page_title = 'Notice Listing';
         $user_type = $this->getUserType();
-        return view('backend.shared.notices.index', compact('page_title',  'user_type'));
+        $roles = $this->getRelevantRoles($user_type);
+        return view('backend.shared.notices.index', compact('page_title', 'user_type', 'roles'));
+    }
+
+    private function getRelevantRoles($user_type)
+    {
+        if ($user_type === 'municipality') {
+            return Role::whereIn('name', ['Head School', 'School Admin', 'Teacher', 'Student', 'Parent'])->get();
+        } elseif ($user_type === 'school_admin') {
+            return Role::whereIn('name', ['Teacher', 'Student', 'Parent'])->get();
+        }
+        return collect();
     }
 
     public function create()
@@ -41,7 +53,7 @@ class NoticeController extends Controller
         $notice = Notice::findOrFail($id);
         return response()->json(['notice' => $notice]);    
     }
-
+    
     public function store(Request $request)
     {
         $user = Auth::user();
@@ -50,15 +62,17 @@ class NoticeController extends Controller
             'description' => 'required|string',
             'release_date' => 'required|date_format:Y-m-d',
             'send_to' => 'required|array',
+            'send_to.*' => 'exists:roles,id',
             'pdf_image' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
 
-        $notice = new Notice();
-        $notice->title = $data['title'];
-        $notice->description = $data['description'];
-        $notice->notice_released_date = Carbon::parse($data['release_date'])->startOfDay();
-        $notice->notice_who_to_send = json_encode($data['send_to']);
-        $notice->created_by = $user->user_type === 'municipality' ? 'municipality' : $user->id;
+        $notice = Notice::create([
+            'title' => $data['title'],
+            'description' => $data['description'],
+            'notice_released_date' => Carbon::parse($data['release_date'])->startOfDay(),
+            'notice_who_to_send' => json_encode($data['send_to']),
+            'created_by' => $user->id,
+        ]);
 
         if ($request->hasFile('pdf_image')) {
             $path = $request->file('pdf_image')->store('notices', 'public');
@@ -83,7 +97,7 @@ class NoticeController extends Controller
             'description' => 'required|string',
             'release_date' => 'required|date_format:Y-m-d',
             'send_to' => 'required|array',
-            'send_to.*' => 'in:school,teacher,parent,student,school_group_head',
+            'send_to.*' => 'exists:roles,id',
             'pdf_image' => 'nullable|mimes:pdf,jpeg,png,jpg|max:2048',
         ]);
 
@@ -92,7 +106,10 @@ class NoticeController extends Controller
         $data['notice_released_date'] = Carbon::parse($request->release_date)->startOfDay();
 
         if ($request->hasFile('pdf_image')) {
-            $data['pdf_image'] = $request->file('pdf_image')->store('notices');
+            if ($notice->pdf_image) {
+                Storage::disk('public')->delete($notice->pdf_image);
+            }
+            $data['pdf_image'] = $request->file('pdf_image')->store('notices', 'public');
         }
 
         $notice->update($data);
@@ -105,20 +122,19 @@ class NoticeController extends Controller
         try {
             $notice->delete();
             if (request()->ajax()) {
-                return response()->json(['success' => true], 200); 
+                return response()->json(['success' => true], 200);
             }
 
             return redirect()->route('admin.notices.index')->with('success', 'Notice deleted successfully.');
 
         } catch (\Exception $e) {
             if (request()->ajax()) {
-                return response()->json(['error' => 'Error deleting notice'], 500); 
+                return response()->json(['error' => 'Error deleting notice'], 500);
             }
 
             return redirect()->route('admin.notices.index')->with('error', 'Error deleting notice.');
         }
     }
-
     public function getNotices(Request $request)
     {
         if (!$request->ajax()) {
@@ -127,25 +143,40 @@ class NoticeController extends Controller
     
         try {
             $user = Auth::user();
-            $userType = $user->user_type_id;
+            $userRole = Role::find($user->role_id);
     
             $notices = Notice::select(['id', 'title', 'description', 'notice_released_date', 'notice_who_to_send', 'created_by']);
     
-            if ($userType === 'municipality') {
-                $notices->where('created_by', 'municipality');
-            } elseif ($userType === 'school_admin') {
+            if ($userRole->name === 'Municipality Admin') {
+                $notices->where('created_by', $user->id);
+            } 
+            elseif ($userRole->name === 'School Admin') {
                 $notices->where(function ($query) use ($user) {
-                    $query->where('created_by', 'municipality')
-                          ->orWhere('created_by', $user->id);
+                    $query->where('created_by', $user->id)
+                        ->orWhereRaw("JSON_CONTAINS(notice_who_to_send, ?)", ['"'.$user->role_id.'"'])
+                        ->orWhereIn('created_by', function ($subQuery) {
+                            $subQuery->select('id')
+                                ->from('users')
+                                ->where('role_id', Role::where('name', 'Municipality Admin')->first()->id);
+                        });
                 });
-            } else {
-                $notices->where(function ($query) use ($user, $userType) {
-                    $query->where('created_by', 'municipality')
-                          ->orWhere('created_by', $user->school_id)
-                          ->orWhereRaw("JSON_CONTAINS(notice_who_to_send, ?)", ['"'.$userType.'"']);
+            } 
+            else {
+                $notices->where(function ($query) use ($user) {
+                    $query->where('created_by', $user->id)
+                        ->orWhereRaw("JSON_CONTAINS(notice_who_to_send, ?)", ['"'.$user->role_id.'"'])
+                        ->orWhereIn('created_by', function ($subQuery) {
+                            $subQuery->select('id')
+                                ->from('users')
+                                ->where('role_id', Role::where('name', 'Municipality Admin')->first()->id);
+                        })
+                        ->orWhereIn('created_by', function ($subQuery) {
+                            $subQuery->select('id')
+                                ->from('users')
+                                ->where('role_id', Role::where('name', 'School Admin')->first()->id);
+                        });
                 });
             }
-            $notices->orWhere('created_by', $user->id);
     
             return DataTables::of($notices)
                 ->addColumn('release_date', function ($notice) {
@@ -153,12 +184,12 @@ class NoticeController extends Controller
                 })
                 ->addColumn('send_to', function ($notice) {
                     $sendTo = json_decode($notice->notice_who_to_send, true);
-                    return is_array($sendTo) ? implode(', ', $sendTo) : '';
+                    $roleNames = Role::whereIn('id', $sendTo)->pluck('name')->toArray();
+                    return implode(', ', $roleNames);
                 })
-                ->addColumn('action', function ($notice) use ($user, $userType) {
+                ->addColumn('action', function ($notice) use ($user, $userRole) {
                     $actions = '';
-                    if (($userType === 'municipality' && $notice->created_by === 'municipality') ||
-                        ($notice->created_by == $user->id)) {
+                    if ($userRole->name === 'Municipality Admin' || $notice->created_by == $user->id) {
                         $actions .= '<button class="btn btn-primary btn-sm editNotice" data-id="' . $notice->id . '">Edit</button> ';
                         $actions .= '<button class="btn btn-danger btn-sm deleteNotice" data-id="' . $notice->id . '">Delete</button>';
                     } else {
@@ -173,16 +204,14 @@ class NoticeController extends Controller
             return response()->json(['error' => 'An error occurred while processing your request.'], 500);
         }
     }
-
+    
+    
     private function userCanViewNotice($user, $notice)
     {
         $userType = $this->getUserType();
         $sendTo = json_decode($notice->notice_who_to_send, true);
 
-        return $notice->created_by == 'municipality' ||
-               $notice->created_by == $user->id ||
-               $notice->created_by == $user->school_id ||
-               in_array($userType, $sendTo);
+        return in_array($user->role_id, $sendTo) || $notice->created_by == $user->id || $notice->created_by == $user->school_id;
     }
 
     public function markAsRead(Request $request, $noticeId)
@@ -192,8 +221,7 @@ class NoticeController extends Controller
             'notice_id' => $noticeId,
             'user_id' => $userId,
         ], ['viewed_at' => now()]);
-    
+
         return response()->json(['success' => true]);
     }
-
 }

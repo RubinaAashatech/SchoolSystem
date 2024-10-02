@@ -31,84 +31,59 @@
         </div>
     </div>
 
-    <!-- Create/Edit Notice Modal -->
-    <div class="modal fade" id="createNotice" tabindex="-1" aria-labelledby="createNoticeLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="createNoticeLabel">Add/Edit Notice</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form method="post" id="noticeForm" action="{{ route('admin.notices.store') }}" enctype="multipart/form-data">
-                        @csrf
-                        <input type="hidden" name="_method" id="methodField" value="POST">
-                        <input type="hidden" name="dynamic_id" id="dynamic_id">
-                        <div class="mb-3">
-                            <label for="dynamic_title" class="form-label">Title<span class="must">*</span></label>
-                            <input type="text" value="{{ old('title') }}" name="title" class="form-control" id="dynamic_title" required>
+   <!-- Create/Edit Notice Modal -->
+   <div class="modal fade" id="createNotice" tabindex="-1" aria-labelledby="createNoticeLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createNoticeLabel">Add/Edit Notice</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" id="noticeForm" action="{{ route('admin.notices.store') }}" enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" name="_method" id="methodField" value="POST">
+                    <input type="hidden" name="dynamic_id" id="dynamic_id">
+                    <div class="mb-3">
+                        <label for="dynamic_title" class="form-label">Title<span class="must">*</span></label>
+                        <input type="text" value="{{ old('title') }}" name="title" class="form-control" id="dynamic_title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dynamic_description" class="form-label">Description<span class="must">*</span></label>
+                        <textarea name="description" class="form-control" id="dynamic_description" required>{{ old('description') }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dynamic_pdf_image" class="form-label">PDF/Image</label>
+                        <input type="file" name="pdf_image" class="form-control" id="dynamic_pdf_image">
+                        <div id="current_file_container" class="mt-2" style="display: none;">
+                            <p>Current file: <span id="current_file_name"></span></p>
+                            <div id="file_preview"></div>
                         </div>
-                        <div class="mb-3">
-                            <label for="dynamic_description" class="form-label">Description<span class="must">*</span></label>
-                            <textarea name="description" class="form-control" id="dynamic_description" required>{{ old('description') }}</textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="dynamic_pdf_image" class="form-label">PDF/Image</label>
-                            <input type="file" name="pdf_image" class="form-control" id="dynamic_pdf_image">
-                        </div>
-                        <div class="mb-3">
-                            <label for="dynamic_release_date" class="form-label">Release Date<span class="must">*</span></label>
-                            <input type="text" name="release_date" class="form-control" id="dynamic_release_date" required readonly>
-                        </div>
-                        <div class="mb-3">
-                            <label for="send_to" class="form-label">Send To<span class="must">*</span></label>
-                            @if($user_type == 'municipality')
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="send_to[]" value="school" id="school">
-                                    <label class="form-check-label" for="school">Schools</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="send_to[]" value="school_group_head" id="school_group_head">
-                                    <label class="form-check-label" for="school_group_head">School Group Head</label>
-                                </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="send_to[]" value="teacher" id="teacher">
-                                <label class="form-check-label" for="teacher">Teachers</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="send_to[]" value="parent" id="parent">
-                                <label class="form-check-label" for="parent">Parents</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="send_to[]" value="student" id="student">
-                                <label class="form-check-label" for="student">Students</label>
-                            </div>
-                            @endif
-                            @if($user_type == 'school_admin')
+                    </div>
+                    <div class="mb-3">
+                        <label for="dynamic_release_date" class="form-label">Release Date<span class="must">*</span></label>
+                        <input type="text" name="release_date" class="form-control" id="dynamic_release_date" required readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="send_to" class="form-label">Send To<span class="must">*</span></label>
+                        @foreach($roles as $role)
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="send_to[]" value="teacher" id="teacher">
-                            <label class="form-check-label" for="teacher">Teachers</label>
+                            <input class="form-check-input" type="checkbox" name="send_to[]" value="{{ $role->id }}" id="role_{{ $role->id }}">
+                            <label class="form-check-label" for="role_{{ $role->id }}">
+                                {{ $role->name }}
+                            </label>
                         </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="send_to[]" value="parent" id="parent">
-                            <label class="form-check-label" for="parent">Parents</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="send_to[]" value="student" id="student">
-                            <label class="form-check-label" for="student">Students</label>
-                        </div>
-                        @endif
-
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary">Save changes</button>
-                        </div>
-                    </form>
-                </div>
+                        @endforeach
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save changes</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+</div>
     
     <!-- View Notice Modal -->
     <div class="modal fade" id="viewNoticeModal" tabindex="-1" aria-labelledby="viewNoticeModalLabel" aria-hidden="true">
@@ -128,39 +103,38 @@
         </div>
     </div>
 </div>
-
 @endsection
 
 @section('scripts')
 @include('backend.includes.nepalidate')
 <script>
-    $(document).ready(function () {
-        $('#notices-table').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: {
-                url: '{{ route('admin.notices.get') }}',
-                type: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
+   $(document).ready(function () {
+    $('#notices-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route('admin.notices.get') }}',
+            type: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
-            columns: [
-                { data: 'id', name: 'id' },
-                { data: 'title', name: 'title' },
-                { data: 'description', name: 'description' },
-                { 
-                    data: 'release_date', 
-                    name: 'release_date',
-                    render: function(data, type, row) {
-                        return data.split(' ')[0]; 
-                    }
-                },
-                { data: 'send_to', name: 'send_to' },
-                { data: 'action', name: 'action', orderable: false, searchable: false }
-            ]
+        },
+        columns: [
+            { data: 'id', name: 'id' },
+            { data: 'title', name: 'title' },
+            { data: 'description', name: 'description' },
+            { 
+                data: 'release_date', 
+                name: 'release_date',
+                render: function(data, type, row) {
+                    return data.split(' ')[0]; 
+                }
+            },
+            { data: 'send_to', name: 'send_to' },
+            { data: 'action', name: 'action', orderable: false, searchable: false }
+        ]
+    });
 
-        });
 
         var releaseDateInput = document.getElementById("dynamic_release_date");
         if (releaseDateInput) {
@@ -185,15 +159,40 @@
             $('#dynamic_id').val(id);
             $('#dynamic_title').val(data.title);
             $('#dynamic_description').val(data.description);
-            $('#dynamic_release_date').val(data.notice_released_date.split(' ')[0]);
+
+            var releaseDate = new Date(data.notice_released_date);
+            var formattedDate = releaseDate.toISOString().split('T')[0]; 
+            $('#dynamic_release_date').val(formattedDate);
+
             var sendTo = JSON.parse(data.notice_who_to_send);
-            $('input[name="send_to[]"]').prop('checked', false);
+            $('input[name="send_to[]"]').prop('checked', false); 
             sendTo.forEach(function (item) {
-                $('#' + item).prop('checked', true);
+                $('#role_' + item).prop('checked', true);
             });
+
+            if (data.pdf_image) {
+                $('#current_file_container').show();
+                $('#current_file_name').text(data.pdf_image.split('/').pop());
+                
+                var fileExtension = data.pdf_image.split('.').pop().toLowerCase();
+                var filePath = "{{ asset('storage') }}/" + data.pdf_image;
+
+                if (fileExtension === 'pdf') {
+                    $('#file_preview').html('<iframe src="' + filePath + '" width="100%" height="200px"></iframe>');
+                } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
+                    $('#file_preview').html('<img src="' + filePath + '" alt="Notice Image" style="max-width: 100%; max-height: 200px;">');
+                } else {
+                    $('#file_preview').html('<p>File format not supported for preview.</p>');
+                }
+            } else {
+                $('#current_file_container').hide();
+                $('#file_preview').empty();
+            }
+
             $('#createNotice').modal('show');
         });
     });
+
 
     $('#noticeForm').submit(function () {
         $('#createNotice').modal('hide');

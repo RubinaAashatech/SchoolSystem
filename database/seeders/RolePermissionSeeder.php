@@ -27,6 +27,7 @@ class RolePermissionSeeder extends Seeder
             'Principal',
             'Receptionist',
             'Student',
+            'Parent',
         ];
         // Define the list of permissions
         $arrayOfPermissionNames = [

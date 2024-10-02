@@ -590,7 +590,7 @@
                         </div>
                     </div>
                 </div>
-                @if($unreadNotices->isNotEmpty())
+                {{-- @if($unreadNotices->isNotEmpty())
                 @foreach($unreadNotices as $notice)
                 <div id="noticeModal-{{ $notice->id }}" class="modal custom-modal" tabindex="-1" role="dialog">
                     <div class="modal-dialog modal-dialog-centered" role="document">
@@ -646,7 +646,7 @@
                     });
                 });
                 </script>
-            @endif
+            @endif --}}
             </div>
         @endsection
         
