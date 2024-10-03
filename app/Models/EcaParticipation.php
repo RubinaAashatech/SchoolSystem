@@ -45,11 +45,10 @@ class EcaParticipation extends Model
         return $this->belongsTo(EcaActivity::class, 'eca_activity_id');
     }
 
-    // public function school()
-    // {
-    //     return $this->belongsTo(School::class, 'school_id');
-    // }
-
+    public function ecaResults()
+    {
+        return $this->hasMany(EcaResult::class);
+    }
 
     public function student()
     {
