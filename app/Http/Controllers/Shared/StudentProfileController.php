@@ -27,21 +27,31 @@ class StudentProfileController extends Controller
         $this->studentUserService = $studentUserService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $schoolId = session('school_id');
+        $perPage = 50;
+        $currentPage = $request->input('page', 1);
+
         $students = Student::with(['user'])
             ->where('school_id', $schoolId)
             ->latest()
             ->get();
+
+        $total = $students->count();
+        $lastPage = ceil($total / $perPage);
+
+        $students = $students->forPage($currentPage, $perPage);
         
-        return view('backend.shared.student_profile.index', compact('students'));
+        return view('backend.shared.student_profile.index', compact('students', 'currentPage', 'lastPage', 'total', 'perPage'));
     }
-    
     
     public function profileSearch(Request $request)
     {
         $schoolId = session('school_id');
+        $perPage = 50; 
+        $currentPage = $request->input('page', 1);
+
         $query = Student::query()->with(['user'])
             ->where('school_id', $schoolId);
 
@@ -60,11 +70,23 @@ class StudentProfileController extends Controller
         }
 
         $students = $query->get();
+        $total = $students->count();
+        $lastPage = ceil($total / $perPage);
+
+        // If search term is provided, we'll display all results without pagination
+        if ($request->filled('search_term')) {
+            $perPage = $total;
+            $currentPage = 1;
+            $lastPage = 1;
+        } else {
+            $students = $students->forPage($currentPage, $perPage);
+        }
+
         $classes = Classg::where('school_id', $schoolId)
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('backend.shared.student_profile.index', compact('students', 'classes'));
+        return view('backend.shared.student_profile.index', compact('students', 'classes', 'currentPage', 'lastPage', 'total', 'perPage'));
     }
 
 

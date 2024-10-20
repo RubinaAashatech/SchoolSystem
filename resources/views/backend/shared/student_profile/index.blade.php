@@ -56,12 +56,45 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center">No students found.</td>
+                                <td colspan="6" class="text-center">No students found.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
+            
+            @if($lastPage > 1)
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <div>
+                    Showing {{ ($currentPage - 1) * $perPage + 1 }} to {{ min($currentPage * $perPage, $total) }} of {{ $total }} entries
+                </div>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination">
+                        @if($currentPage > 1)
+                            <li class="page-item">
+                                <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $currentPage - 1]) }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        @endif
+                        
+                        @for($i = 1; $i <= $lastPage; $i++)
+                            <li class="page-item {{ $i == $currentPage ? 'active' : '' }}">
+                                <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $i]) }}">{{ $i }}</a>
+                            </li>
+                        @endfor
+                        
+                        @if($currentPage < $lastPage)
+                            <li class="page-item">
+                                <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $currentPage + 1]) }}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        @endif
+                    </ul>
+                </nav>
+            </div>
+            @endif
         </div>
     </div>
 </div>
@@ -70,7 +103,10 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
-        $('#dataTable').DataTable();
+        $('#dataTable').DataTable({
+            "paging": false,
+            "info": false
+        });
     });
 </script>
 @endpush
