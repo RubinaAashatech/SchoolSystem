@@ -35,60 +35,19 @@ class SubjectTeacherController extends Controller
     
         return response()->json($teachers);
     }
-    // public function assignTeachers(string $id)
-    // {
-    //     $schoolId = session('school_id');
-    //     if (!$schoolId) {
-    //         abort(403, 'School ID not found in session');
-    //     }
-
-    //     $subjectGroup = SubjectGroup::findOrFail($id);
-    //     $page_title = "Assign Teachers To " . $subjectGroup->subject_group_name;
-    //     $classes = Classg::where('school_id', $schoolId)->get();
-    //     $staffTypeId = UserType::where('title', 'staffs')->value('id');
-    //     $teacherRole = Role::where('name', 'Teacher')->first();
-    //     $teacherRoleId = $teacherRole ? $teacherRole->id : null;
-    //     $teachers = User::where('user_type_id', $staffTypeId)
-    //         ->whereHas('staff', function ($query) use ($teacherRoleId, $schoolId) {
-    //             $query->where('role_id', $teacherRoleId)  
-    //                   ->where('school_id', $schoolId);
-    //         })
-    //         ->select('id', 'f_name', 'l_name')
-    //         ->get()
-    //         ->mapWithKeys(function ($teacher) {
-    //             return [$teacher->id => $teacher->f_name . ' ' . $teacher->l_name];
-    //         });
-    //     $subjects = $subjectGroup->subjects;
-
-    //     return view('backend.school_admin.subject_group.teacher.create', 
-    //         compact('page_title', 'subjectGroup', 'classes', 'teachers', 'subjects'));
-    // }
-
-    public function assignTeachers(Request $request, string $id)
+    public function assignTeachers(Request $request, string $subjectGroupId, string $classId, string $sectionId)
     {
         $schoolId = session('school_id');
         if (!$schoolId) {
             abort(403, 'School ID not found in session');
         }
-
-        $subjectGroup = SubjectGroup::findOrFail($id);
+    
+        $subjectGroup = SubjectGroup::findOrFail($subjectGroupId);
         $page_title = "Assign Teachers To " . $subjectGroup->subject_group_name;
-
-        $classes = Classg::where('school_id', $schoolId)->get();
-
-        $classSections = ClassSection::where('school_id', $schoolId)
-            ->with(['section', 'class'])
-            ->get()
-            ->groupBy('class_id')
-            ->map(function ($sections) {
-                return $sections->map(function ($classSection) {
-                    return [
-                        'id' => $classSection->section->id,
-                        'section_name' => $classSection->section->section_name
-                    ];
-                });
-            });
-
+    
+        $class = Classg::findOrFail($classId);
+        $section = Section::findOrFail($sectionId);
+    
         $staffTypeId = UserType::where('title', 'staffs')->value('id');
         $teacherRole = Role::where('name', 'Teacher')->first();
         $teacherRoleId = $teacherRole ? $teacherRole->id : null;
@@ -102,34 +61,18 @@ class SubjectTeacherController extends Controller
             ->mapWithKeys(function ($teacher) {
                 return [$teacher->id => $teacher->f_name . ' ' . $teacher->l_name];
             });
-
+    
         $subjects = $subjectGroup->subjects;
-
+    
         $assignedTeachers = SubjectTeacher::with(['subject', 'class', 'section', 'user'])
-            ->where('subject_group_id', $id)
-            ->when($request->has('class_id') && $request->class_id != '', function ($query) use ($request) {
-                $query->where('class_id', $request->class_id);
-            })
+            ->where('subject_group_id', $subjectGroupId)
+            ->where('class_id', $classId)
+            ->where('section_id', $sectionId)
             ->paginate(10);
-
+    
         return view('backend.school_admin.subject_group.teacher.create', 
-            compact('page_title', 'subjectGroup', 'classes', 'teachers', 'subjects', 'assignedTeachers', 'classSections'));
+            compact('page_title', 'subjectGroup', 'class', 'section', 'teachers', 'subjects', 'assignedTeachers'));
     }
-    public function getSections($class_id)
-    {
-        $schoolId = session('school_id');
-        if (!$schoolId) {
-            return response()->json(['error' => 'School ID not found in session'], 403);
-        }
-
-        $sections = Section::whereHas('classSections', function($query) use ($schoolId, $class_id) {
-            $query->where('school_id', $schoolId)
-                  ->where('class_id', $class_id);
-        })->select('id', 'section_name')->get();
-
-        return response()->json($sections);
-    }
-
     public function storeAssignTeachers(Request $request)
     {
         try {
@@ -163,14 +106,12 @@ class SubjectTeacherController extends Controller
                 ['user_id' => $request->user_id]
             );
     
-            // Redirect back with a success message
             return redirect()->back()->with('success', 'Teacher assigned successfully');
         } catch (\Exception $e) {
             Log::error('Error storing assigned teachers: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Error processing data: ' . $e->getMessage());
         }
     }
-    
 
     public function getAssignedTeachers(Request $request)
     {

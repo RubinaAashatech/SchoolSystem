@@ -33,13 +33,21 @@
             </div>
         </div>
     </div>
+@endcan
 
-    @can('assign_subject_teachers')
-    <a href="{{ route('admin.subject-teachers.assign', ['id' => $subjectGroups['id']]) }}" 
+@can('assign_subject_teachers')
+    <a href="{{ route('admin.subject-teachers.assign', [
+            'subjectGroupId' => $subjectGroups['id'], 
+            'classId' => $subjectGroups['classes'][0]['id'] ?? null,
+            'sectionId' => $subjectGroups['sections'][0]['id'] ?? null
+        ]) }}" 
        class="btn btn-outline-success btn-sm mx-1" 
-       data-toggle="tooltip" data-placement="top" title="Assign Teachers">
+       data-toggle="tooltip" 
+       data-placement="top" 
+       title="Assign Teachers">
         <i class="fas fa-user-plus"></i> Assign Teachers
     </a>
 @endcan
 
-@endcan
+
+

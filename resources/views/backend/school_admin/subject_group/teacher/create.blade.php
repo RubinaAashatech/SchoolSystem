@@ -10,9 +10,15 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-12 col-lg-12">
-                        <form id="assignTeacherForm" action="{{ route('admin.subject-teachers.store') }}" method="POST">
-                            @csrf
-                            <input type="hidden" name="subject_group_id" value="{{ $subjectGroup->id }}">
+                        <form action="{{ route('admin.subject-teachers.store', [
+                            'subjectGroupId' => $subjectGroup->id,
+                            'classId' => $class->id ?? '',
+                            'sectionId' => $section->id ?? '' 
+                        ]) }}" method="POST" class="mb-3">
+                        @csrf
+                        <input type="hidden" name="subject_group_id" value="{{ $subjectGroup->id }}">
+                        <input type="hidden" name="class_id" value="{{ $class->id ?? '' }}">
+                        <input type="hidden" name="section_id" value="{{ $section->id ?? '' }}">
                             <div class="row">
                                 <div class="col-sm-3">
                                     <label>Subject</label><small class="req"> *</small>
@@ -29,25 +35,15 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-3">
-                                    <label>Class</label><small class="req"> *</small>
-                                    <div class="form-group select">
-                                        <select id="class-dropdown" name="class_id">
-                                            <option value="">Select Class</option>
-                                            @foreach($classes as $class)
-                                                <option value="{{ $class->id }}">{{ $class->class }}</option>
-                                            @endforeach
-                                        </select>
+                                    <label>Class</label>
+                                    <div class="form-group">
+                                        <input type="text" class="form-control" value="{{ $class->class }}" readonly>
                                     </div>
                                 </div>
                                 <div class="col-sm-3">
-                                    <label>Section</label><small class="req"> *</small>
-                                    <div class="form-group select">
-                                        <select id="section-dropdown" name="section_id">
-                                            <option value="">Select Section</option>
-                                        </select>
-                                        @error('section_id')
-                                            <strong class="text-danger">{{ $message }}</strong>
-                                        @enderror
+                                    <label>Section</label>
+                                    <div class="form-group">
+                                        <input type="text" class="form-control" value="{{ $section->section_name }}" readonly>
                                     </div>
                                 </div>
                                 <div class="col-sm-3">
@@ -79,12 +75,16 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Assigned Teachers</h5>
-                    <form action="{{ route('admin.subject-teachers.assign', $subjectGroup->id) }}" method="GET" class="mb-3">
-                        <div class="row">
+                    <form action="{{ route('admin.subject-teachers.assign', [
+                            'subjectGroupId' => $subjectGroup->id,
+                            'classId' => $class->id ?? '',
+                            'sectionId' => $section->id ?? '' 
+                        ]) }}" method="GET" class="mb-3">
+                        {{-- <div class="row">
                             <div class="col-md-4">
                                 <select name="class_id" class="form-control">
                                     <option value="">All Classes</option>
-                                    @foreach($classes as $class)
+                                    @foreach($class as $class)
                                         <option value="{{ $class->id }}" {{ request('class_id') == $class->id ? 'selected' : '' }}>
                                             {{ $class->class }}
                                         </option>
@@ -94,7 +94,7 @@
                             <div class="col-md-2">
                                 <button type="submit" class="btn btn-primary">Filter</button>
                             </div>
-                        </div>
+                        </div> --}}
                     </form>
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped">
@@ -104,7 +104,7 @@
                                     <th>Class</th>
                                     <th>Section</th>
                                     <th>Teacher</th>
-                                    <th>Actions</th>
+                                    {{-- <th>Actions</th> --}}
                                 </tr>
                             </thead>
                             <tbody>
@@ -114,14 +114,14 @@
                                         <td>{{ $teacher->class->class }}</td>
                                         <td>{{ $teacher->section->section_name }}</td>
                                         <td>{{ $teacher->user->f_name . ' ' . $teacher->user->l_name }}</td>
-                                        <td>
+                                        {{-- <td>
                                             <a href="{{ route('admin.edit', $teacher->id) }}" class="btn btn-sm btn-primary">Edit</a>
                                             <form action="{{ route('admin.delete', $teacher->id) }}" method="POST" style="display:inline;">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
                                             </form>
-                                        </td>
+                                        </td> --}}
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -133,24 +133,3 @@
         </div>
     </div>
 @endsection
-
-@push('scripts')
-<script>
-    const classSections = @json($classSections);
-
-    document.getElementById('class-dropdown').addEventListener('change', function() {
-        const classId = this.value;
-        const sectionDropdown = document.getElementById('section-dropdown');
-        sectionDropdown.innerHTML = '<option value="">Select Section</option>';
-
-        if (classSections[classId]) {
-            classSections[classId].forEach(section => {
-                const option = document.createElement('option');
-                option.value = section.id;
-                option.textContent = section.section_name;
-                sectionDropdown.appendChild(option);
-            });
-        }
-    });
-</script>
-@endpush
