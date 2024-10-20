@@ -349,6 +349,7 @@ class RolePermissionSeeder extends Seeder
             'view_municipality_headteacher_logs',
             'view_student_profile',
             'assign_subject_teachers',
+            'school_attendance_report',
 
         ];
 
@@ -942,6 +943,7 @@ class RolePermissionSeeder extends Seeder
             'delete_notice_head',
             'view_student_profile',
             'assign_subject_teachers',
+            'school_attendance_report',
 
     //define permission for School Teacher
         $permissionForTeacher = [

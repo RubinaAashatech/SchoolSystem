@@ -727,44 +727,37 @@
                     </div>
                 </div>
             </div>
-           
-            <!-- Holiday Range Modal -->
             <div class="modal fade" id="holidayRangeModal" tabindex="-1" role="dialog" aria-labelledby="holidayRangeModalLabel" aria-hidden="true">
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="holidayRangeModalLabel">Mark Holiday Range</h5>
+                            <h5 class="modal-title" id="holidayRangeModalLabel">Mark Holiday</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <!-- Start Date Input -->
                             <div class="form-group">
                                 <label for="holidayStartDate">Start Date:</label>
-                                <input type="text" class="form-control" id="holidayStartDate" placeholder="YYYY-MM-DD">
+                                <input type="text" name="date" class="form-control" id="holidayStartDate" placeholder="YYYY-MM-DD" required>
                             </div>
-                            <!-- End Date Input -->
+                            <!-- End Date Input (Optional) -->
                             <div class="form-group">
-                                <label for="holidayEndDate">End Date:</label>
-                                <input type="text" class="form-control" id="holidayEndDate" placeholder="YYYY-MM-DD">
+                                <label for="holidayEndDate">End Date (Optional):</label>
+                                <input type="text" name="date" class="form-control" id="holidayEndDate" placeholder="YYYY-MM-DD">
                             </div>
                             <!-- Reason Input -->
                             <div class="form-group">
                                 <label for="holidayReason">Reason:</label>
-                                <input type="text" class="form-control" id="holidayReason" placeholder="e.g., Summer Vacation, Dashain Vacation">
+                                <input type="text" name="remarks" class="form-control" id="holidayReason" placeholder="e.g., Summer Vacation, Dashain Vacation" required>
                             </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-primary" id="saveHolidayRange">Save Holiday Range</button>
+                            <button type="button" class="btn btn-primary" id="saveHolidayRange">Save Holiday</button>
                         </div>
                     </div>
                 </div>
             </div>
-           
-
-
-
-
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -922,15 +915,11 @@
                         </div>
                         <span class="fw-bold">School Wise Student's Attendence</span>
                     </div>
-
-
                 </div>
             </div>
         </div>
     </div>
-
-
-@section('scripts')
+    @section('scripts')
     @include('backend.includes.nepalidate')
     @include('backend.includes.chartjs')
     <script>
@@ -1050,8 +1039,6 @@
                 var totalStudents = parseInt($(this).data('total-students'));
                 var presentStudents = parseInt($(this).data('present-students'));
                 var absentStudents = parseInt($(this).data('absent-students'));
-
-
                 if (presentStudents + absentStudents < totalStudents) {
                     $(this).removeClass('btn-success').addClass('btn-warning').text('Partial');
                 } else {
@@ -1059,48 +1046,38 @@
                 }
             });
         }
-
-
         // Call the function when the page loads
         $(document).ready(function() {
             updateAttendanceStatus();
         });
-
-
-       
-    // Event listener for save button click
-    $('#saveHolidayButton').click(function(e) {
-      e.preventDefault();
-     
-      // Send AJAX request to mark all schools as holiday
-      $.ajax({
+   // Event listener for save button click
+$('#saveHolidayButton').click(function(e) {
+    e.preventDefault();
+    // Send AJAX request to mark all schools as holiday
+    $.ajax({
         url: '', // Define this route in your web.php
         type: 'POST',
         data: {
-          _token: '{{ csrf_token() }}', // Include CSRF token for Laravel
-          // Include other data if needed (e.g., holiday date, etc.)
+            _token: '{{ csrf_token() }}', // Include CSRF token for Laravel
+            // Include other data if needed (e.g., holiday date, etc.)
         },
         success: function(response) {
-          // Close the modal
-          $('#holidayModal').modal('hide');
-
-
-          // Show a success message or update the UI to reflect changes
-          alert('All schools have been marked as holiday successfully!');
-          // Optionally, you can refresh the table or list of schools here to reflect changes.
+            // Close the modal
+            $('#holidayModal').modal('hide');
+            // Show a success message or update the UI to reflect changes
+            alert('All schools have been marked as holiday successfully!');
+            // Optionally, you can refresh the table or list of schools here to reflect changes.
         },
         error: function(xhr, status, error) {
-          // Handle any errors
-          console.log(xhr.responseText);
-          alert('Something went wrong. Please try again.');
+            // Handle any errors
+            console.log(xhr.responseText);
+            alert('Something went wrong. Please try again.');
         }
-      });
     });
-
-
-      // Initialize date pickers for the holiday range modal
-      $('#holidayStartDate, #holidayEndDate').nepaliDatePicker()
-    $("#holidayStartDate").nepaliDatePicker({
+});
+// Initialize date pickers for the holiday range modal
+$('#holidayStartDate, #holidayEndDate').nepaliDatePicker();
+$("#holidayStartDate").nepaliDatePicker({
     container: "#holidayRangeModal",
     dateFormat: "YYYY-MM-DD",
     ndpYear: true,
@@ -1110,8 +1087,6 @@
         $(this).change();
     }
 });
-
-
 $("#holidayEndDate").nepaliDatePicker({
     container: "#holidayRangeModal",
     dateFormat: "YYYY-MM-DD",
@@ -1122,28 +1097,24 @@ $("#holidayEndDate").nepaliDatePicker({
         $(this).change();
     }
 });
-
-
 // Open the holiday range modal
 $('#markHolidayRangeButton').click(function() {
     $('#holidayRangeModal').modal('show');
 });
-
-
 // Handle saving the holiday range
 $('#saveHolidayRange').click(function() {
     var startDate = $('#holidayStartDate').val();
     var endDate = $('#holidayEndDate').val();
     var reason = $('#holidayReason').val();
-
-
-    if (!startDate || !endDate) {
-        toastr.warning('Please select both start and end dates.');
+    if (!startDate) {
+        toastr.warning('Please select the start date.');
         return;
     }
-
-
-    if (confirm('Are you sure you want to mark holidays from ' + startDate + ' to ' + endDate + '?')) {
+    // Ensure the confirmation message includes proper endDate if provided
+    var confirmationMessage = endDate
+        ? 'Are you sure you want to mark holidays from ' + startDate + ' to ' + endDate + '?'
+        : 'Are you sure you want to mark ' + startDate + ' as a holiday?';
+    if (confirm(confirmationMessage)) {
         $.ajax({
             url: '{{ route("admin.student.mark-holiday-range") }}',
             type: 'POST',
@@ -1151,8 +1122,8 @@ $('#saveHolidayRange').click(function() {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
             data: {
-                start_date: startDate,
-                end_date: endDate,
+                date: startDate, // start_date changed to 'date' for consistency with controller
+                end_date: endDate || null, // Send null if endDate is empty
                 reason: reason
             },
             success: function(response) {
@@ -1171,10 +1142,6 @@ $('#saveHolidayRange').click(function() {
         });
     }
 });
-
     </script>
 @endsection
-
-
 @endsection
-

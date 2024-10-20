@@ -162,26 +162,11 @@ class DashboardController extends Controller
 
     $noticeCount = $noticeData['count'];
 
-
-
-
     $classesWithIncompleteAttendance = $this->getClassesWithIncompleteAttendance();
 
-
-    // Fetch holiday information for the current date
-    $today = Carbon::today()->format('Y-m-d');
-    $nepaliDateToday = LaravelNepaliDate::from($today)->toNepaliDate();
-    $holidayInfo = StudentAttendance::where('date', $nepaliDateToday)
-                    ->where('attendance_type_id', 3) // Assuming 3 is the ID for holiday
-                    ->first();
-
-
-    $isHoliday = false;
-    $holidayReason = '';
-    if ($holidayInfo) {
-        $isHoliday = true;
-        $holidayReason = $holidayInfo->remarks;
-    }
+    $isHoliday = StudentAttendance::where('date', $nepaliDateToday)
+    ->where('attendance_type_id', 4)
+    ->exists();
 
 
     // Return view with compacted data
@@ -190,10 +175,22 @@ class DashboardController extends Controller
         'totalPresentBoys', 'totalPresentGirls', 'totalAbsentBoys',
         'totalAbsentGirls', 'presentStudents', 'absentStudents',
         'totalStaffs', 'presentStaffs', 'absentStaffs', 'initials',
-        'staff_attendance', 'noticeCount', 'staff_data', 'class_wise_student_attendances', 'class_wise_students','classesWithIncompleteAttendance','isHoliday','holidayReason'
+        'staff_attendance', 'noticeCount', 'staff_data', 'class_wise_student_attendances', 'class_wise_students','classesWithIncompleteAttendance','isHoliday'
     ));
 }
 
+public function schoolDashboard() {
+    // Get the current Nepali date
+    $nepaliDateToday = LaravelNepaliDate::from(Carbon::now()->toDateString())->toNepaliDate();
+    // Check if any date is marked as a holiday in the StudentAttendance table
+    $isHoliday = StudentAttendance::where('attendance_type_id', 4)
+        ->exists();
+    // Return the dashboard view with the holiday info
+    return view('backend.school_admin.dashboard.dashboard', [
+        'isHoliday' => $isHoliday,
+        'currentDate' => $nepaliDateToday,
+    ]);
+}
 
 private function fetchMunicipalityNoticeData()
 {

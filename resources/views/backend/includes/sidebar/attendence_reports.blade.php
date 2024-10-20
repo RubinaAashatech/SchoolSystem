@@ -62,6 +62,15 @@
             </li>
         @endcan
 
+        @can('school_attendance_report')
+            <li class="nav-item"><a class="nav-link {{ Request::segment(2) == 'notice-head' ? 'active' : '' }}"
+                    href="{{ route('admin.school_attendance_reports.report') }}">
+                    <div class="d-flex align-items-center"><i class="fa fa-angle-double-right"></i> {{ __('Attendance Report')}}
+                    </div>
+                </a>
+            </li>
+        @endcan
+
         @can('view_student_profile')
             <li class="nav-item"><a class="nav-link {{ Request::segment(2) == 'notice-head' ? 'active' : '' }}"
                     href="{{ route('admin.student-profile.index') }}">

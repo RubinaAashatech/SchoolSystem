@@ -374,56 +374,40 @@ class DashboardController extends Controller
     }
 
 
-    public function markHolidayRange(Request $request)
-{
-    $request->validate([
-        'start_date' => 'required|date',
-        'end_date' => 'required|date|after_or_equal:start_date',
-        'reason' => 'required|string|max:255',
-    ]);
-
-
-    $startDate = $request->start_date;
-    $endDate = $request->end_date;
-    $reason = $request->reason;
-
-
-    $dates = [];
-    $currentDate = Carbon::parse($startDate);
-    $lastDate = Carbon::parse($endDate);
-
-
-    while ($currentDate <= $lastDate) {
-        $dates[] = $currentDate->format('Y-m-d');
-        $currentDate->addDay();
+    public function markHolidayRange(Request $request) {
+        $request->validate([
+            'date' => 'required|date',
+            'date' => 'nullable|date|after_or_equal:date',
+            'remarks' => 'required|string|max:255',
+        ]);
+        $startDate = Carbon::parse($request->date);
+        $endDate = $request->date ? Carbon::parse($request->date) : $startDate;
+        $currentDate = $startDate->copy();
+        while ($currentDate <= $endDate) {
+            $nepaliDate = LaravelNepaliDate::from($currentDate->toDateString())->toNepaliDate();
+            // Update or create StudentAttendance records
+            StudentAttendance::updateOrCreate(
+                ['date' => $nepaliDate],
+                ['attendance_type_id' => 4]
+            );
+            $currentDate->addDay();
+        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Holiday has been marked successfully.',
+        ]);
     }
-
-
-    // Mark all schools as holiday for the given date range
-    foreach ($dates as $date) {
-        $nepaliDate = LaravelNepaliDate::from($date)->toNepaliDate();
-       
-        // Update or create StudentAttendance records
-        StudentAttendance::updateOrCreate(
-            ['date' => $nepaliDate],
-            ['attendance_type_id' => 3, 'remarks' => $reason] // Assuming 3 is the ID for holiday
-        );
-
-
-        // Update or create StaffAttendance records
-        StaffAttendance::updateOrCreate(
-            ['date' => $nepaliDate],
-            ['attendance_type_id' => 3, 'remarks' => $reason] // Assuming 3 is the ID for holiday
-        );
     }
-
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Holiday range has been marked successfully.',
-    ]);
-}
-}
-
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
 
