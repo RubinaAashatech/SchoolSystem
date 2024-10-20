@@ -42,7 +42,7 @@
 
                 @include('backend.includes.sidebar.ECA_activities_management')
                 @include('backend.includes.sidebar.Notice_management')
-                @include('backend.includes.sidebar.student_profile_management')
+                {{-- @include('backend.includes.sidebar.student_profile_management') --}}
                 @include('backend.includes.sidebar.attendence_reports')
                 @include('backend.includes.sidebar.user_management')
                 @include('backend.includes.sidebar.role_permission')
