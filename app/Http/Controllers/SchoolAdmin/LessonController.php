@@ -1,6 +1,8 @@
 <?php
 
+
 namespace App\Http\Controllers\SchoolAdmin;
+
 
 use Alert;
 use Validator;
@@ -15,6 +17,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
 use App\Rules\UniqueLessons;
+
 
 class LessonController extends Controller
 {
@@ -43,23 +46,35 @@ class LessonController extends Controller
             'lessons' => 'required|array|max:255',
             'subject_group' => [new UniqueLessons($request->input('class_id'), $request->input('sections'), $request->input('subject_group_id'), $request->input('subject_id'), $request->input('lessons'))],
         ]);
+   
         if ($validatedData->fails()) {
-
             return back()->withToastError($validatedData->messages()->all()[0])->withInput();
         }
-
-        // dd($request->all());
+   
         try {
             $data = $request->only(['subject_group_id', 'subject_id', 'class_id']);
             $data['academic_session_id'] = session('academic_session_id');
             $data['school_id'] = session('school_id');
+   
+            // Check if academic_session_id is not set or empty
+            if (empty($data['academic_session_id'])) {
+                // You might want to set a default value or return an error
+                return back()->withToastError('Academic session is not set. Please select an academic session.')->withInput();
+            }
+   
+            // Check if school_id is not set or empty
+            if (empty($data['school_id'])) {
+                return back()->withToastError('School ID is not set. Please log in again.')->withInput();
+            }
+   
             foreach ($request->input('sections') as $section) {
                 foreach ($request->input('lessons') as $lesson) {
                     $data['name'] = $lesson;
                     $data['section_id'] = $section;
-                    $savedData = Lesson::Create($data);
+                    $savedData = Lesson::create($data);
                 }
             }
+   
             return redirect()->back()->withToastSuccess('Lesson Saved Successfully!');
         } catch (\Exception $e) {
             return back()->withToastError($e->getMessage());
@@ -68,6 +83,7 @@ class LessonController extends Controller
     public function edit(string $id)
     {
         $lesson = Lesson::find($id);
+
 
         return view('backend.school_admin.lessons.index', compact('lesson'));
     }
@@ -84,6 +100,7 @@ class LessonController extends Controller
         ]);
         if ($validatedData->fails()) {
 
+
             return back()->withToastError($validatedData->messages()->all()[0])->withInput();
         }
         try {
@@ -92,8 +109,10 @@ class LessonController extends Controller
             $requestData['academic_session_id'] = session('academic_session_id');
             $requestData['school_id'] = session('school_id');
 
+
             //if the lesson is removed then remove from records
             $this->removeNonArrayLessons($requestData, $request->input('lessons'));
+
 
             // Iterate over the sections and lessons arrays
             foreach ($request->input('sections') as $section) {
@@ -109,12 +128,14 @@ class LessonController extends Controller
                         'name' => $lesson
                     ];
 
+
                     // Update or create the lesson
                     Lesson::updateOrCreate($lessonData);
                 }
             }
 
-            return redirect()->back()->withToastSuccess('Successfully Updated Lesson!');
+
+        return redirect()->back()->withToastSuccess('Successfully Updated Lesson!');
         } catch (Exception $e) {
             return back()->withToastError($e->getMessage())->withInput();
         }
@@ -131,6 +152,7 @@ class LessonController extends Controller
             'subject_group_id' => $requestData['subject_group_id'],
             'subject_id' => $requestData['subject_id'],
         ])->get();
+
 
         // Iterate over existing lessons
         foreach ($existingLessons as $existingLesson) {
@@ -160,6 +182,7 @@ class LessonController extends Controller
             return back()->withToastError($e->getMessage());
         }
 
+
         return back()->withToastError('Something went wrong. please try again');
     }
     public function getAllLessons(Request $request)
@@ -168,9 +191,11 @@ class LessonController extends Controller
         // dd($lesson);
         $data = [];
 
+
         // Iterate through the $lessons array and reformat the data
         foreach ($lesson as $classId => $class) {
             foreach ($class as $sectionId => $section) {
+
 
                 // Get the lesson names and id individually
                 $lessonNames = [];
@@ -181,6 +206,7 @@ class LessonController extends Controller
                         $lessonId[] = $less['id'];
                     }
                 }
+
 
                 $lessonsString = implode('<br>', $lessonNames);
                 // dd($lessonsString);
@@ -208,20 +234,25 @@ class LessonController extends Controller
                 return $data['class'];
             })
 
+
             ->addColumn('actions', function ($data) {
                 return view('backend.school_admin.lessons.partials.controller_action', ['lesson' => $data])->render();
             })
 
+
             ->make(true);
     }
+
 
     public function getForDataTable($request = null)
     {
         // Retrieve all lessons
         $lessons = Lesson::all();
 
+
         // Initialize an empty array to store the manipulated data
         $manipulatedData = [];
+
 
         // Loop through the lessons and organize the data as needed
         foreach ($lessons as $lesson) {
@@ -236,6 +267,7 @@ class LessonController extends Controller
             $subject_name = $lesson->subjects->subject;
             $lessonName = $lesson->name;
             $lesson_id = $lesson->id;
+
 
             // Create a nested structure as per the desired format
             $manipulatedData[$classId][$sectionId]['id'] = $lesson->id;
@@ -255,3 +287,6 @@ class LessonController extends Controller
         return $manipulatedData;
     }
 }
+
+
+

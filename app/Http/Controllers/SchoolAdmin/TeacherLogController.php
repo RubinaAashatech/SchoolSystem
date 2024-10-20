@@ -1,12 +1,16 @@
 <?php
 
+
 namespace App\Http\Controllers\SchoolAdmin;
+
 
 use Validator;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Classg;
+use App\Models\User;
 use App\Models\SubjectGroup;
+use App\Models\School;
 use App\Models\TeacherLog;
 use Illuminate\Http\Request;
 use Yajra\Datatables\Datatables;
@@ -16,11 +20,14 @@ use App\Http\Requests\TeacherLogRequest;
 use App\Rules\UniqueLogBookDate;
 use Illuminate\Support\Facades\Storage;
 
+
 class TeacherLogController extends Controller
 {
     protected $fileService;
 
+
     protected $studentUserService;
+
 
     public function __construct(FileService $fileService, TeacherLogService $teacherLogService)
     {
@@ -28,22 +35,47 @@ class TeacherLogController extends Controller
         $this->teacherLogService = $teacherLogService;
     }
 
+
     /**
      * Display a listing of the resource.
      */
     public function index()
-    {
-        $page_title = "Teacher's Logs";
-        $schoolId = session('school_id');
-        $classes = Classg::where('school_id', $schoolId)
-            ->orderBy('created_at', 'desc')
-            ->get();
-        $subject_groups = SubjectGroup::where('school_id', $schoolId)
-            ->orderBy('created_at', 'desc')
-            ->get();
-        // $subject_groups = SubjectGroup::all();
-        return view('backend.school_admin.logs.teachers_logs.index', compact('classes', 'subject_groups', 'page_title'));
-    }
+{
+    $page_title = "Teacher's Logs";
+    $schoolId = session('school_id');
+
+
+    // Get the role of the authenticated user
+    $user = Auth::user();
+    $roles = $user->getRoleNames();
+
+
+    // Check if the user has the 'Municipality Admin' role
+    $isMunicipality = $roles->contains('Municipality Admin');
+
+
+    $classes = Classg::where('school_id', $schoolId)
+        ->orderBy('created_at', 'desc')
+        ->get();
+   
+    $subject_groups = SubjectGroup::where('school_id', $schoolId)
+        ->orderBy('created_at', 'desc')
+        ->get();
+   
+    $schools = School::all();
+
+
+    // Correctly use the role scope on the query builder
+    $teachers = User::query()->role('Teacher')->get();
+
+
+    return view('backend.school_admin.logs.teachers_logs.index', compact('classes', 'subject_groups', 'page_title', 'schools', 'isMunicipality', 'teachers'));
+}
+
+
+
+
+
 
     /**
      * Show the form for creating a new resource.
@@ -52,18 +84,23 @@ class TeacherLogController extends Controller
     {
         $schoolId = session('school_id');
 
+
         $classes = Classg::where('school_id', $schoolId)
             ->orderBy('created_at', 'desc')
             ->get();
+
 
         $subject_groups = SubjectGroup::where('school_id', $schoolId)
             ->orderBy('created_at', 'desc')
             ->get();
 
+
         $page_title = "Create Teacher's Logs";
+
 
         return view('backend.school_admin.logs.teachers_logs.create', compact('classes', 'subject_groups', 'page_title'));
     }
+
 
     /**
      * Store a newly created resource in storage.
@@ -81,7 +118,9 @@ class TeacherLogController extends Controller
             'topic_id' => 'required|numeric|exists:topics,id',
         ];
 
+
         $validator = Validator::make($request->all(), $rules);
+
 
         // Adding an "after" validation hook
         $validator->after(function ($validator) use ($request) {
@@ -113,9 +152,11 @@ class TeacherLogController extends Controller
             }
         });
 
+
         if ($validator->fails()) {
             return back()->withToastError($validator->messages()->all())->withInput();
         }
+
 
         try {
             $data = $request->only(['subject_group_id', 'subject_id', 'class_id', 'lesson_id', 'topic_id', 'classwork', 'homework', 'log_book_date']);
@@ -136,13 +177,22 @@ class TeacherLogController extends Controller
         }
     }
 
+
     /**
      * Store a newly created resource in storage.
      */
     public function getAllTeacherLogs(Request $request)
     {
         $school_id = session('school_id');
+       
+        // Ensure you retrieve the logs only for the current school
         $teacherLogs = $this->teacherLogService->getTeacherLogsForDataTable($request->all(), $school_id);
+   
+        // Check if the teacherLogs are retrieved correctly
+        if ($teacherLogs->isEmpty()) {
+            return response()->json(['data' => []]); // Return empty array if no logs found
+        }
+   
         return Datatables::of($teacherLogs)
             ->escapeColumns([])
             ->addColumn('class', function ($teacherLogs) {
@@ -164,23 +214,21 @@ class TeacherLogController extends Controller
                 return $teacherLogs->topics ? $teacherLogs->topics->topic_name : 'Undefined';
             })
             ->addColumn('file', function ($teacherLogs) {
-                return $teacherLogs->file ? '<a href="' . asset('storage/teacher_log/' . $teacherLogs->file) . '" target="_blank" class="btn btn-primary">
-                <i class="fas fa-file"></i> View
-                </a>' : '';
+                return $teacherLogs->file ? '<a href="' . asset('storage/teacher_log/' . $teacherLogs->file) . '" target="_blank" class="btn btn-primary"><i class="fas fa-file"></i> View</a>' : '';
             })
             ->addColumn('teacher', function ($teacherLogs) {
                 return $teacherLogs->teacher_id ? $teacherLogs->f_name . ' ' . $teacherLogs->l_name : 'Undefined';
             })
-
             ->addColumn('actions', function ($teacherLogs) {
                 return view('backend.school_admin.logs.teachers_logs.partials.controller_action', ['teacherlog' => $teacherLogs])->render();
             })
             ->addColumn('created_at', function ($teacherLogs) {
                 return $teacherLogs->created_at->diffForHumans();
             })
-
             ->make(true);
     }
+   
+
 
     /**
      * Display the specified resource.
@@ -189,6 +237,7 @@ class TeacherLogController extends Controller
     {
         //
     }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -200,6 +249,7 @@ class TeacherLogController extends Controller
         $classes = Classg::all();
         return view('backend.school_admin.logs.teachers_logs.edit', compact('teacherlogs', 'classes', 'page_title'));
     }
+
 
     /**
      * Update the specified resource in storage.
@@ -217,7 +267,9 @@ class TeacherLogController extends Controller
             'topic_id' => 'required|numeric|exists:topics,id',
         ];
 
+
         $validator = Validator::make($request->all(), $rules);
+
 
         // Adding an "after" validation hook
         $validator->after(function ($validator) use ($request, $id) {
@@ -245,12 +297,15 @@ class TeacherLogController extends Controller
             }
         });
 
+
         if ($validator->fails()) {
             return back()->withToastError($validator->messages()->all())->withInput();
         }
 
+
         try {
             $teacherLog = TeacherLog::findOrFail($id);
+
 
             $data = $request->except('_token', '_method', 'sections');
             if ($request->hasFile('file') && !is_null($request->file)) {
@@ -271,6 +326,7 @@ class TeacherLogController extends Controller
         }
     }
 
+
     /**
      * Remove the specified resource from storage.
      */
@@ -284,6 +340,8 @@ class TeacherLogController extends Controller
             return back()->withToastError($e->getMessage());
         }
 
+
         return back()->withToastError('Something went wrong. please try again');
     }
 }
+

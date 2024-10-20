@@ -1,65 +1,92 @@
 @extends('backend.layouts.master')
+
+
 @section('content')
 <div class="container">
     <h1>Attendance Report</h1>
-    <div class="row">
-        <div class="col-lg-3 col-sm-3 mt-2">
-            <div class="p-2 label-input">
-                <label for="nepali-datepicker">Date:</label>
+
+
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
+
+
+    <form action="{{ route('admin.attendance_reports.report') }}" method="GET" class="mb-4">
+        @csrf
+        <div class="row align-items-end">
+            <div class="col-md-4">
                 <div class="form-group">
-                    <div class="input-group date" id="admission-datetimepicker" data-target-input="nearest">
-                        <input id="nepali-datepicker" name="date" type="text" class="form-control datetimepicker-input" />
-                    </div>
-                    @error('date')
-                        <strong class="text-danger">{{ $message }}</strong>
-                    @enderror
+                    <label for="school_id">Select School:</label>
+                    <select name="school_id" id="school_id" class="form-control">
+                        <option value="">-- Select a School --</option>
+                        @foreach($schools as $school)
+                            <option value="{{ $school->id }}">{{ $school->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
-        </div>
-        <div class="col-lg-3 col-sm-3 mt-2">
-            <div class="p-2 label-input">
-                <label for="schoolSelect">Select School:</label>
-                <select id="schoolSelect" name="school_id" class="form-control">
-                    <option value="">Select School</option>
-                    @foreach ($schools as $school)
-                        <option value="{{ $school->id }}">{{ $school->name }}</option>
-                    @endforeach
-                </select>
-                @error('school_id')
-                    <strong class="text-danger">{{ $message }}</strong>
-                @enderror
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="from_date">From Date:</label>
+                    <input type="text" name="from_date" id="fromDatepicker" class="form-control nepali-datepicker" required>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="to_date">To Date (Optional):</label>
+                    <input type="text" name="to_date" id="toDatepicker" class="form-control nepali-datepicker">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Generate Report</button>
             </div>
         </div>
-        <div class="col-lg-3 col-sm-3 mt-5">
-            <div class="search-button-container d-flex align-items-end">
-                <button id="searchButton" class="btn btn-sm btn-primary">Search</button>
-            </div>
-        </div>
-        <div class="col-lg-6 col-sm-6 mt-2 d-flex justify-content-end">
-            <div id="buttons-container" class="d-flex align-items-center"></div>
-        </div>
-    </div>
-    <table id="attendanceTable" class="table table-striped table-bordered">
+    </form>
+
+
+    <div id="buttons-container" class="mt-3"></div>
+
+
+    <table class="table mt-4" id="attendanceTable">
         <thead>
             <tr>
-                <th>Student Name</th>
-                <th>Attendance Type</th>
+                <th>Date</th>
+                <th>Total Students</th>
+                <th>Present Students</th>
+                <th>Absent Students</th>
+                <th>Total Staffs</th>
+                <th>Present Staffs</th>
+                <th>Absent Staffs</th>
             </tr>
         </thead>
         <tbody>
-            <!-- Data will be populated by DataTables -->
+            @if(isset($schoolData) && is_array($schoolData) && count($schoolData) > 0)
+                @foreach($schoolData as $data)
+                <tr>
+                    <td>{{ $data['date'] }}</td>
+                    <td>{{ $data['total_students'] ?? 0 }}</td>
+                    <td>{{ $data['present_students'] ?? 0 }}</td>
+                    <td>{{ $data['absent_students'] ?? 0 }}</td>
+                    <td>{{ $data['total_staff'] ?? 0 }}</td>
+                    <td>{{ $data['present_staff'] ?? 0 }}</td>
+                    <td>{{ $data['absent_staff'] ?? 0 }}</td>
+                </tr>
+                @endforeach
+            @else
+                <tr>
+                    <td colspan="7" class="text-center">No data found for the selected criteria.</td>
+                </tr>
+            @endif
         </tbody>
     </table>
 </div>
 
-<!-- DataTables and Buttons extension CSS -->
+
+<!-- DataTables and Buttons extension CSS and JS -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.3/css/buttons.bootstrap5.min.css">
-
-<!-- jQuery and DataTables JS -->
 <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
-<!-- Buttons extension JS -->
 <script src="https://cdn.datatables.net/buttons/2.2.3/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
@@ -68,6 +95,8 @@
 <script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.colVis.min.js"></script>
 <script src="http://nepalidatepicker.sajanmaharjan.com.np/nepali.datepicker/js/nepali.datepicker.v4.0.4.min.js"></script>
 
+
+<!-- Custom CSS for button styling -->
 <style>
     #buttons-container {
         display: flex;
@@ -84,47 +113,102 @@
         float: left;
         text-align: right;
     }
+    /* Hide the processing message */
+    .dataTables_processing {
+        display: none !important;
+    }
+    /* Add a loading overlay */
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+    .loading-spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
 </style>
 
+
 <script type="text/javascript">
-  $(document).ready(function() {
+$(document).ready(function() {
+
+
+     // Retrieve the last selected school ID from localStorage
+     var lastSelectedSchool = localStorage.getItem('lastSelectedSchool');
+    if (lastSelectedSchool) {
+        $('#school_id').val(lastSelectedSchool);
+    }
+
+
+    // Save the selected school ID to localStorage when changed
+    $('#school_id').change(function() {
+        localStorage.setItem('lastSelectedSchool', $(this).val());
+    });
+   
     // Initialize nepali-datepicker
-    $('#nepali-datepicker').nepaliDatePicker({
+    $('#fromDatepicker').nepaliDatePicker({
         dateFormat: 'YYYY-MM-DD',
         closeOnDateSelect: true
     });
 
-    // Set today's date in the date picker
-    var currentDate = NepaliFunctions.GetCurrentBsDate();
-    var padZero = function (num) {
-        return num < 10 ? '0' + num : num;
-    };
-    var formattedDate = currentDate.year + '-' + padZero(currentDate.month) + '-' + padZero(currentDate.day);
-    $('#nepali-datepicker').val(formattedDate);
 
-    // Initialize DataTable with Buttons extension but without data
+    $('#toDatepicker').nepaliDatePicker({
+        dateFormat: 'YYYY-MM-DD',
+        closeOnDateSelect: true
+    });
+
+
+    // Add loading overlay to the table
+    $('#attendanceTable').wrap('<div class="position-relative"></div>').before('<div class="loading-overlay"><div class="loading-spinner"></div></div>');
+
+
+    // Initialize DataTable
     var table = $('#attendanceTable').DataTable({
-        processing: true,
+        processing: false,
         serverSide: true,
         searching: false,
         ajax: {
             url: '{{ route("admin.attendance_reports.data") }}',
             data: function (d) {
-                d.date = $('#nepali-datepicker').val();
-                d.school_id = $('#schoolSelect').val();
+                d.from_date = $('#fromDatepicker').val();
+                d.to_date = $('#toDatepicker').val();
+                d.school_id = $('#school_id').val();
             },
-            dataSrc: function(json) {
-                // Only load data if school_id is selected
-                if ($('#schoolSelect').val()) {
-                    return json.data;
-                } else {
-                    return [];
-                }
+            beforeSend: function() {
+                $('.loading-overlay').show();
+            },
+            complete: function() {
+                $('.loading-overlay').hide();
+            },
+            error: function(xhr, error, code) {
+                console.log(xhr.responseText);
+                $('.loading-overlay').hide();
             }
         },
         columns: [
-            { data: 'student_name', name: 'student_name' },
-            { data: 'attendance_type', name: 'attendance_type' }
+            { data: 'date', name: 'date' },
+            { data: 'total_students', name: 'total_students' },
+            { data: 'present_students', name: 'present_students' },
+            { data: 'absent_students', name: 'absent_students' },
+            { data: 'total_staff', name: 'total_staff' },
+            { data: 'present_staff', name: 'present_staff' },
+            { data: 'absent_staff', name: 'absent_staff' },
         ],
         dom: '<"d-flex justify-content-between"lfB>rtip',
         buttons: {
@@ -142,34 +226,18 @@
         ordering: false,
         language: {
             emptyTable: "No matching records found"
-        },
-        drawCallback: function(settings) {
-            var api = this.api();
-            if (api.rows({page: 'current'}).count() === 0) {
-                $(api.table().container()).find('.dataTables_paginate').hide();
-            } else {
-                $(api.table().container()).find('.dataTables_paginate').show();
-            }
-        },
-        initComplete: function(settings, json) {
-            var api = this.api();
-            if (api.rows({page: 'current'}).count() === 0) {
-                $(api.table().container()).find('.dataTables_paginate').hide();
-            } else {
-                $(api.table().container()).find('.dataTables_paginate').show();
-            }
         }
     });
 
-    // Redraw the table when the search button is clicked
+
+    // Search button click event
     $('#searchButton').on('click', function() {
-        if ($('#schoolSelect').val()) {
-            table.draw();
-        } else {
-            table.clear().draw(); // Clear the table if no school is selected
-        }
+        $('.loading-overlay').show();
+        table.ajax.reload(function() {
+            $('.loading-overlay').hide();
+        });
     });
 });
-
 </script>
 @endsection
+

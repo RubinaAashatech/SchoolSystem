@@ -11,7 +11,7 @@
                     <strong><span class="mb-0" style="color: black">{{ $student->user->gender }}</span></strong>
                 </div>
                 <div class="button-group">
-                    <button class="btn btn-primary btn-sm same-size-btn" onclick="printStudentInfo()">Print Student Info</button>
+                    <button class="btn btn-primary btn-sm same-size-btn" onclick="printStudentInfo()">Print</button>
                     <a href="{{ url()->previous() }}" class="btn btn-primary btn-sm same-size-btn"><i class="fa fa-angle-double-left"></i> Back</a>
                 </div>                
             </div>
@@ -71,17 +71,20 @@
                     </div>
                 </div>
                 
-                <!-- Exam Results -->
+              <!-- Exam Results -->
                 <div class="card mb-4 shadow-sm">
                     <div class="card-body">
                         <h4 class="card-title text-primary">Exam Results</h4>
                         @if(empty($processedTerminalResults) && empty($processedFinalResults))
                             <p>No exam results available.</p>
                         @else
+                            <div class="bg-light p-3 rounded mb-3">
+                                <h5>For Class: {{ $class }} ({{ $section }})</h5>
                             @if(!empty($processedFinalResults))
                                 <div class="bg-light p-3 rounded mb-3">
                                     <h5>{{ $finalExamName }} CGPA: {{ $finalCGPA }}</h5>
                                 </div>
+                            </div>
                             @endif
                         @endif
                     </div>

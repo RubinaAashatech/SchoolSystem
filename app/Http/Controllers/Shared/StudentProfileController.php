@@ -95,8 +95,8 @@ class StudentProfileController extends Controller
         $terminalCGPA = $processedTerminalResults['gpa'] ?? 0;
         $finalCGPA = $processedFinalResults['overallGPA'] ?? 0;
     
-        $class = $studentSession->classg;
-        $section = $studentSession->section;
+        $class = $studentSession->classg->class ?? 'N/A'; 
+        $section = $studentSession->section->section_name ?? 'N/A';
     
         $terminalExamName = $terminalResults->isNotEmpty() 
             ? $terminalResults->first()->examSchedule->examination->exam 
