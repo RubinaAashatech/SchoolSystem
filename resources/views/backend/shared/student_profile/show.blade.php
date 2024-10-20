@@ -3,7 +3,6 @@
 @section('content')
     <div class="container my-5">
         <div class="profile-container">
-            <!-- Non-printable header -->
             <div class="profile-header text-white p-4 rounded d-flex justify-content-between align-items-center no-print">
                 <div class="profile-info">
                     <h2 class="mb-1">{{ $student->user->f_name }} {{ $student->user->m_name }} {{ $student->user->l_name }}</h2>
@@ -11,13 +10,12 @@
                     <strong><span class="mb-0" style="color: black">{{ $student->user->gender }}</span></strong>
                 </div>
                 <div class="button-group">
-                    <button class="btn btn-primary btn-sm same-size-btn" onclick="printStudentInfo()">Print</button>
                     <a href="{{ url()->previous() }}" class="btn btn-primary btn-sm same-size-btn"><i class="fa fa-angle-double-left"></i> Back</a>
+                    <button onclick="window.print()" class="btn btn-success btn-sm same-size-btn"><i class="fa fa-print"></i> Print</button>
                 </div>                
             </div>
 
-            <!-- Profile Content -->
-            <div id="printable-content" class="profile-body mt-4">
+            <div id="printable-content">
                 <!-- Student Basic Information -->
                 <div class="card mb-4 shadow-sm">
                     <div class="card-body">
@@ -71,7 +69,7 @@
                     </div>
                 </div>
                 
-              <!-- Exam Results -->
+                <!-- Exam Results -->
                 <div class="card mb-4 shadow-sm">
                     <div class="card-body">
                         <h4 class="card-title text-primary">Exam Results</h4>
@@ -80,12 +78,12 @@
                         @else
                             <div class="bg-light p-3 rounded mb-3">
                                 <h5>For Class: {{ $class }} ({{ $section }})</h5>
-                            @if(!empty($processedFinalResults))
-                                <div class="bg-light p-3 rounded mb-3">
-                                    <h5>{{ $finalExamName }} CGPA: {{ $finalCGPA }}</h5>
-                                </div>
+                                @if(!empty($processedFinalResults))
+                                    <div class="bg-light p-3 rounded mb-3">
+                                        <h5>{{ $finalExamName }} CGPA: {{ $finalCGPA }}</h5>
+                                    </div>
+                                @endif
                             </div>
-                            @endif
                         @endif
                     </div>
                 </div>
@@ -149,33 +147,6 @@
 
 @section('styles')
     <style>
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #printable-content, #printable-content * {
-                visibility: visible;
-            }
-            #printable-content {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-            }
-            .no-print, .no-print * {
-                display: none !important;
-            }
-            .card {
-                break-inside: avoid;
-                border: none;
-                box-shadow: none;
-            }
-            .card-title {
-                color: #000 !important;
-                border-bottom: 1px solid #000;
-            }
-        }
-
         .profile-container {
             max-width: 800px;
             margin: auto;
@@ -208,13 +179,57 @@
             background-color: #f8f9fa;
             border-left: 4px solid #007bff;
         }
+        
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-content,
+            #printable-content * {
+                visibility: visible;
+            }
+            #printable-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print,
+            .profile-header,
+            .button-group {
+                display: none !important;
+            }
+            .card {
+                border: none;
+                box-shadow: none;
+            }
+            .card-body {
+                padding: 0;
+            }
+            @page {
+                size: A4;
+                margin: 1cm;
+            }
+            html, body {
+                width: 210mm;
+                height: 297mm;
+            }
+            .container {
+                width: 100% !important;
+                max-width: none !important;
+            }
+        }
     </style>
 @endsection
 
 @section('scripts')
     <script>
-        function printStudentInfo() {
-            window.print();
-        }
+        window.onbeforeprint = function() {
+            document.body.innerHTML = document.getElementById('printable-content').innerHTML;
+        };
+        window.onafterprint = function() {
+            location.reload();
+        };
     </script>
 @endsection

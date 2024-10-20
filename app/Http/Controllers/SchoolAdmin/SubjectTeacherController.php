@@ -65,56 +65,56 @@ class SubjectTeacherController extends Controller
     // }
 
     public function assignTeachers(Request $request, string $id)
-{
-    $schoolId = session('school_id');
-    if (!$schoolId) {
-        abort(403, 'School ID not found in session');
+    {
+        $schoolId = session('school_id');
+        if (!$schoolId) {
+            abort(403, 'School ID not found in session');
+        }
+
+        $subjectGroup = SubjectGroup::findOrFail($id);
+        $page_title = "Assign Teachers To " . $subjectGroup->subject_group_name;
+
+        $classes = Classg::where('school_id', $schoolId)->get();
+
+        $classSections = ClassSection::where('school_id', $schoolId)
+            ->with(['section', 'class'])
+            ->get()
+            ->groupBy('class_id')
+            ->map(function ($sections) {
+                return $sections->map(function ($classSection) {
+                    return [
+                        'id' => $classSection->section->id,
+                        'section_name' => $classSection->section->section_name
+                    ];
+                });
+            });
+
+        $staffTypeId = UserType::where('title', 'staffs')->value('id');
+        $teacherRole = Role::where('name', 'Teacher')->first();
+        $teacherRoleId = $teacherRole ? $teacherRole->id : null;
+        $teachers = User::where('user_type_id', $staffTypeId)
+            ->whereHas('staff', function ($query) use ($teacherRoleId, $schoolId) {
+                $query->where('role_id', $teacherRoleId)  
+                      ->where('school_id', $schoolId);
+            })
+            ->select('id', 'f_name', 'l_name')
+            ->get()
+            ->mapWithKeys(function ($teacher) {
+                return [$teacher->id => $teacher->f_name . ' ' . $teacher->l_name];
+            });
+
+        $subjects = $subjectGroup->subjects;
+
+        $assignedTeachers = SubjectTeacher::with(['subject', 'class', 'section', 'user'])
+            ->where('subject_group_id', $id)
+            ->when($request->has('class_id') && $request->class_id != '', function ($query) use ($request) {
+                $query->where('class_id', $request->class_id);
+            })
+            ->paginate(10);
+
+        return view('backend.school_admin.subject_group.teacher.create', 
+            compact('page_title', 'subjectGroup', 'classes', 'teachers', 'subjects', 'assignedTeachers', 'classSections'));
     }
-
-    $subjectGroup = SubjectGroup::findOrFail($id);
-    $page_title = "Assign Teachers To " . $subjectGroup->subject_group_name;
-
-    // Fetch classes for the school
-    $classes = Classg::where('school_id', $schoolId)->get();
-
-    // Fetch all sections for the school with class-section mappings
-    $classSections = Section::whereHas('classSections', function($query) use ($schoolId) {
-        $query->where('school_id', $schoolId);
-    })
-    ->with('classSections')
-    ->get()
-    ->groupBy(function ($section) {
-        return $section->classSections->first()->class_id;  // Group sections by class_id
-    });
-
-    $staffTypeId = UserType::where('title', 'staffs')->value('id');
-    $teacherRole = Role::where('name', 'Teacher')->first();
-    $teacherRoleId = $teacherRole ? $teacherRole->id : null;
-    $teachers = User::where('user_type_id', $staffTypeId)
-        ->whereHas('staff', function ($query) use ($teacherRoleId, $schoolId) {
-            $query->where('role_id', $teacherRoleId)  
-                  ->where('school_id', $schoolId);
-        })
-        ->select('id', 'f_name', 'l_name')
-        ->get()
-        ->mapWithKeys(function ($teacher) {
-            return [$teacher->id => $teacher->f_name . ' ' . $teacher->l_name];
-        });
-
-    $subjects = $subjectGroup->subjects;
-
-    $assignedTeachers = SubjectTeacher::with(['subject', 'class', 'section', 'user'])
-        ->where('subject_group_id', $id)
-        ->when($request->has('class_id') && $request->class_id != '', function ($query) use ($request) {
-            $query->where('class_id', $request->class_id);
-        })
-        ->paginate(10);
-
-    return view('backend.school_admin.subject_group.teacher.create', 
-        compact('page_title', 'subjectGroup', 'classes', 'teachers', 'subjects', 'assignedTeachers', 'classSections'));
-}
-
-
     public function getSections($class_id)
     {
         $schoolId = session('school_id');

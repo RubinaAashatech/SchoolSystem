@@ -45,7 +45,6 @@
                                         <select id="section-dropdown" name="section_id">
                                             <option value="">Select Section</option>
                                         </select>
-                                        
                                         @error('section_id')
                                             <strong class="text-danger">{{ $message }}</strong>
                                         @enderror
@@ -128,7 +127,7 @@
                             </tbody>
                         </table>
                     </div>
-                    {{ $assignedTeachers->links() }} <!-- Pagination links -->
+                    {{ $assignedTeachers->links() }} 
                 </div>
             </div>
         </div>
@@ -137,21 +136,21 @@
 
 @push('scripts')
 <script>
- const classSections = @json($classSections);
+    const classSections = @json($classSections);
 
-document.getElementById('class-dropdown').addEventListener('change', function () {
-    const classId = this.value;
-    const sectionDropdown = document.getElementById('section-dropdown');
-    sectionDropdown.innerHTML = '<option value="">Select Section</option>';
+    document.getElementById('class-dropdown').addEventListener('change', function() {
+        const classId = this.value;
+        const sectionDropdown = document.getElementById('section-dropdown');
+        sectionDropdown.innerHTML = '<option value="">Select Section</option>';
 
-    if (classSections[classId]) {
-        classSections[classId].forEach(section => {
-            const option = document.createElement('option');
-            option.value = section.id;
-            option.textContent = section.section_name;
-            sectionDropdown.appendChild(option);
-        });
-    }
-});
+        if (classSections[classId]) {
+            classSections[classId].forEach(section => {
+                const option = document.createElement('option');
+                option.value = section.id;
+                option.textContent = section.section_name;
+                sectionDropdown.appendChild(option);
+            });
+        }
+    });
 </script>
 @endpush

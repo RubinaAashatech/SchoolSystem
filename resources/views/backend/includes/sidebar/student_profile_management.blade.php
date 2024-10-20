@@ -7,14 +7,14 @@
             </div>
         </div>
     <li class="nav-item">
-        <a class="nav-link dropdown-indicator" href="#dashboard13" role="button" data-bs-toggle="collapse" aria-expanded="true"
+        <a class="nav-link dropdown-indicator" href="#dashboard29" role="button" data-bs-toggle="collapse" aria-expanded="true"
             aria-controls="dashboard">
             <div class="d-flex align-items-center"><span class="nav-link-icon"><i
                         class="fas fa-user"></i></span><span class="nav-link-text ps-1">{{ __("Student Profile")}}
                 </span></div>
         </a>
         <ul class="nav collapse  {{ Request::segment(2) == 'student-profile'? 'show' : '' }}"
-            id="dashboard13">
+            id="dashboard29">
             @can('view_student_profile')
                 <li class="nav-item"><a class="nav-link {{ Request::segment(2) == 'notice-head' ? 'active' : '' }}"
                         href="{{ route('admin.student-profile.index') }}">
