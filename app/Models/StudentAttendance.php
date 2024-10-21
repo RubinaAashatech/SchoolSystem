@@ -10,6 +10,7 @@ class StudentAttendance extends Model
     use HasFactory;
 
     protected $fillable = [
+        'student_session_id',
         'biometric_attendance',
         'attendance_type_id',
         'date',

@@ -376,54 +376,72 @@ class DashboardController extends Controller
 
     public function markHolidayRange(Request $request)
     {
-    try {
-        $schoolId = session('school_id');
-        $startDate = Carbon::parse($request->input('start_date'));
-        $endDate = Carbon::parse($request->input('end_date'));
-        $reason = $request->input('reason');
-        DB::beginTransaction();
-        // Iterate through each date in the range
-        for ($date = $startDate; $date->lte($endDate); $date->addDay()) {
-            // Update existing attendance records to holiday for all students in the school
-            $updatedCount = StudentAttendance::whereHas('studentSession', function ($query) use ($schoolId) {
-                $query->whereHas('student', function ($query) use ($schoolId) {
-                    $query->where('school_id', $schoolId);
-                });
-            })->where('date', $date->toDateString())
-              ->update(['attendance_type_id' => 4, 'remarks' => $reason]);
-            // Insert new attendance records for students without existing records for the date
-            $students = Student::where('school_id', $schoolId)->get();
-            foreach ($students as $student) {
-                // Get student sessions for the school and student
-                $studentSessions = $student->studentSessions()
-                    ->where('school_id', $schoolId)
-                    ->pluck('id');
-                foreach ($studentSessions as $studentSessionId) {
-                    // Check if attendance record already exists for the student session and date
-                    $existingAttendance = StudentAttendance::where('student_session_id', $studentSessionId)
-                        ->where('date', $date->toDateString())
-                        ->first();
-                    if (!$existingAttendance) {
-                        // Create a new attendance record
-                        $newAttendance = new StudentAttendance();
-                        $newAttendance->student_session_id = $studentSessionId;
-                        $newAttendance->date = $date->toDateString();
-                        $newAttendance->attendance_type_id = 4; // Set to 4 for holiday
-                        $newAttendance->remarks = $reason; // Optional: Add remarks if needed
-                        $newAttendance->save();
+        try {
+            $startDate = Carbon::parse($request->input('start_date'));
+            $endDate = Carbon::parse($request->input('end_date'));
+            $reason = $request->input('reason');
+            $schoolId = session('school_id');
+            $municipalityId = session('municipality_id');
+            DB::beginTransaction();
+            // Iterate through each date in the range
+            for ($date = $startDate; $date->lte($endDate); $date->addDay()) {
+                $query = StudentAttendance::whereHas('studentSession', function ($query) use ($schoolId, $municipalityId) {
+                    $query->whereHas('student', function ($query) use ($schoolId, $municipalityId) {
+                        if ($schoolId) {
+                            $query->where('school_id', $schoolId);
+                        } elseif ($municipalityId) {
+                            $query->whereHas('school', function ($query) use ($municipalityId) {
+                                $query->where('municipality_id', $municipalityId);
+                            });
+                        }
+                    });
+                })->where('date', $date->toDateString());
+                // Update existing attendance records to holiday
+                $updatedCount = $query->update(['attendance_type_id' => 4, 'remarks' => $reason]);
+                // Insert new attendance records for students without existing records for the date
+                $studentsQuery = Student::query();
+                if ($schoolId) {
+                    $studentsQuery->where('school_id', $schoolId);
+                } elseif ($municipalityId) {
+                    $studentsQuery->whereHas('school', function ($query) use ($municipalityId) {
+                        $query->where('municipality_id', $municipalityId);
+                    });
+                }
+                $students = $studentsQuery->get();
+                foreach ($students as $student) {
+                    $studentSessions = $student->studentSessions()
+                        ->when($schoolId, function ($query) use ($schoolId) {
+                            return $query->where('school_id', $schoolId);
+                        })
+                        ->pluck('id');
+                    if ($studentSessions->isEmpty()) {
+                        continue; // Skip if no student sessions found
+                    }
+                    foreach ($studentSessions as $studentSessionId) {
+                        $existingAttendance = StudentAttendance::where('student_session_id', $studentSessionId)
+                            ->where('date', $date->toDateString())
+                            ->first();
+                        if (!$existingAttendance) {
+                            // Insert the new record with student_session_id
+                            StudentAttendance::create([
+                                'student_session_id' => $studentSessionId,  // Ensure this is passed
+                                'date' => $date->toDateString(),
+                                'attendance_type_id' => 4, // Assuming 4 is for holiday
+                                'remarks' => $reason
+                            ]);
+                        }
                     }
                 }
             }
+            DB::commit();
+            return response()->json(['success' => true, 'message' => "Student attendances updated/inserted successfully for holiday range."]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Failed to update/insert student attendances for holiday range: ' . $e->getMessage()]);
         }
-        DB::commit();
-        return response()->json(['success' => true, 'message' => "Student attendances updated/inserted successfully for holiday range."]);
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return response()->json(['success' => false, 'message' => 'Failed to update/insert student attendances for holiday range: ' . $e->getMessage()]);
     }
 }
-}
-
+    
 
 
 

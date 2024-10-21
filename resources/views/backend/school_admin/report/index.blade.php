@@ -161,8 +161,7 @@
                 emptyTable: "No matching records found"
             }
         });
-    
-        // Function to update sections based on selected class
+
         function updateSections() {
             var selectedOption = $('#class_id option:selected');
             var sections = selectedOption.data('sections');
@@ -179,13 +178,11 @@
                 });
             }
         }
-    
-        // Update sections when class changes
+
         $('#class_id').on('change', function() {
             updateSections();
         });
-    
-        // Initial update of sections
+
         updateSections();
     
         $('form').on('submit', function(e) {

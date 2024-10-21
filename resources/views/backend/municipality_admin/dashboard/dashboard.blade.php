@@ -1100,13 +1100,16 @@ $('#saveHolidayRange').click(function() {
     var startDate = $('#holidayStartDate').val();
     var endDate = $('#holidayEndDate').val();
     var reason = $('#holidayReason').val();
+    var context = $('input[name="context"]').val(); // 'school' or 'municipality'
     if (!startDate || !endDate) {
         toastr.warning('Please select both start and end dates.');
         return;
     }
     if (confirm('Are you sure you want to mark holidays from ' + startDate + ' to ' + endDate + '?')) {
         $.ajax({
-            url: '{{ route("admin.student.mark-holiday-range") }}',
+            url: context === 'municipality' ?
+                '{{ route("admin.student.mark-holiday-range") }}' :
+                '{{ route("admin.municipality.mark-holiday-range") }}',
             type: 'POST',
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -1114,7 +1117,8 @@ $('#saveHolidayRange').click(function() {
             data: {
                 start_date: startDate,
                 end_date: endDate,
-                reason: reason
+                reason: reason,
+                context: context
             },
             success: function(response) {
                 if (response.success) {
