@@ -734,9 +734,9 @@
                                 <label for="holidayStartDate">Start Date:</label>
                                 <input type="text" name="date" class="form-control" id="holidayStartDate" placeholder="YYYY-MM-DD" required>
                             </div>
-                            <!-- End Date Input (Optional) -->
+                            <!-- End Date Input -->
                             <div class="form-group">
-                                <label for="holidayEndDate">End Date (Optional):</label>
+                                <label for="holidayEndDate">End Date:</label>
                                 <input type="text" name="date" class="form-control" id="holidayEndDate" placeholder="YYYY-MM-DD">
                             </div>
                             <!-- Reason Input -->

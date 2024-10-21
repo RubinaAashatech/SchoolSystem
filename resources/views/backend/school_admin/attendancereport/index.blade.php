@@ -122,13 +122,13 @@
 
     $('#toDatepicker').nepaliDatePicker({
         dateFormat: 'YYYY-MM-DD',
-        closeOnDateSelect: true
+        closeOnDateSelect: true,
     });
 
     var table = $('#attendanceTable').DataTable({
         processing: true,
         serverSide: true,
-        searching: false,
+        searching: true,
         ajax: {
             url: '{{ route("admin.attendance_schoolreports.data") }}',
             data: function (d) {
