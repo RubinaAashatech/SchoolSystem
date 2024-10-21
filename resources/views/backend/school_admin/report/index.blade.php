@@ -24,7 +24,8 @@
                     <select name="class_id" id="class_id" class="form-control" required>
                         <option value="">Select Class</option>
                         @foreach($classes as $class)
-                            <option value="{{ $class->id }}" {{ (request('class_id') == $class->id) ? 'selected' : '' }}>
+                            <option value="{{ $class->id }}" {{ (request('class_id') == $class->id) ? 'selected' : '' }}
+                                data-sections='@json($class->sections)'>
                                 {{ $class->class }}
                             </option>
                         @endforeach
@@ -37,11 +38,6 @@
                     <label for="section_id">Section:</label>
                     <select name="section_id" id="section_id" class="form-control" required>
                         <option value="">Select Section</option>
-                        @foreach($sections as $section)
-                            <option value="{{ $section->id }}" {{ (request('section_id') == $section->id) ? 'selected' : '' }}>
-                                {{ $section->section_name }}
-                            </option>
-                        @endforeach
                     </select>
                 </div>
             </div>
@@ -117,81 +113,97 @@
 </style>
 
 <script type="text/javascript">
-$(document).ready(function() {
-    // Initialize nepali-datepicker
-    $('#nepali-datepicker').nepaliDatePicker({
-        dateFormat: 'YYYY-MM-DD',
-        closeOnDateSelect: true
-    });
-
-    var currentDate = NepaliFunctions.GetCurrentBsDate();
-    var padZero = function (num) {
-        return num < 10 ? '0' + num : num;
-    };
-    var formattedDate = currentDate.year + '-' + padZero(currentDate.month) + '-' + padZero(currentDate.day);
-    $('#nepali-datepicker').val(formattedDate);
-
-    $('#table-container').hide();
-
-    var table = $('#attendanceTable').DataTable({
-        processing: true,
-        serverSide: true,
-        searching: true,
-        responsive: true,
-        ajax: {
-            url: '{{ route("admin.school_attendance_reports.data") }}',
-            type: 'GET',
-            data: function (d) {
-                d.date = $('#nepali-datepicker').val();
-                d.class_id = $('select[name="class_id"]').val();
-                d.section_id = $('select[name="section_id"]').val();
-            }
-        },
-        columns: [
-            { data: 'student_name', name: 'student_name' },
-            { data: 'attendance_type', name: 'attendance_type' },
-        ],
-        dom: '<"d-flex justify-content-between"lfB>rtip',
-        buttons: {
-            dom: {
-                button: {
-                    className: 'btn btn-sm btn-primary'
+    $(document).ready(function() {
+        // Initialize nepali-datepicker
+        $('#nepali-datepicker').nepaliDatePicker({
+            dateFormat: 'YYYY-MM-DD',
+            closeOnDateSelect: true
+        });
+    
+        var currentDate = NepaliFunctions.GetCurrentBsDate();
+        var padZero = function (num) {
+            return num < 10 ? '0' + num : num;
+        };
+        var formattedDate = currentDate.year + '-' + padZero(currentDate.month) + '-' + padZero(currentDate.day);
+        $('#nepali-datepicker').val(formattedDate);
+    
+        $('#table-container').hide();
+    
+        var table = $('#attendanceTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: '{{ route("admin.school_attendance_reports.data") }}',
+                type: 'GET',
+                data: function (d) {
+                    d.date = $('#nepali-datepicker').val();
+                    d.class_id = $('#class_id').val();
+                    d.section_id = $('#section_id').val();
                 }
             },
-            buttons: [
-                'copy', 'csv', 'excel', 'pdf', 'print'
+            columns: [
+                { data: 'student_name', name: 'student_name' },
+                { data: 'attendance_type', name: 'attendance_type' }
             ],
-            container: '#buttons-container'
-        },
-        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        ordering: false,
-        language: {
-            emptyTable: "No matching records found"
+            dom: '<"d-flex justify-content-between"lfB>rtip',
+            buttons: {
+                dom: {
+                    button: {
+                        className: 'btn btn-sm btn-primary'
+                    }
+                },
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ],
+                container: '#buttons-container'
+            },
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+            ordering: false,
+            language: {
+                emptyTable: "No matching records found"
+            }
+        });
+    
+        // Function to update sections based on selected class
+        function updateSections() {
+            var selectedOption = $('#class_id option:selected');
+            var sections = selectedOption.data('sections');
+            var sectionSelect = $('#section_id');
+            
+            sectionSelect.empty().append('<option value="">Select Section</option>');
+            
+            if (sections) {
+                sections.forEach(function(section) {
+                    sectionSelect.append($('<option>', {
+                        value: section.id,
+                        text: section.section_name
+                    }));
+                });
+            }
         }
+    
+        // Update sections when class changes
+        $('#class_id').on('change', function() {
+            updateSections();
+        });
+    
+        // Initial update of sections
+        updateSections();
+    
+        $('form').on('submit', function(e) {
+            e.preventDefault();
+            var classId = $('#class_id').val();
+            var sectionId = $('#section_id').val();
+            var date = $('#nepali-datepicker').val();
+            if (classId && sectionId && date) {
+                $('#table-container').show();
+                table.ajax.reload();
+            } else {
+                $('#table-container').hide();
+                alert('Please select Class, Section, and Date to view the report.');
+            }
+        });
     });
-
-    $('#class_id').on('change', function() {
-        var classId = $(this).val();
-        if (classId) {
-            window.location.href = '{{ route("admin.school_attendance_reports.index") }}?class_id=' + classId;
-        }
-    });
-
-    $('form').on('submit', function(e) {
-        e.preventDefault();
-        var classId = $('select[name="class_id"]').val();
-        var sectionId = $('select[name="section_id"]').val();
-        if (classId && sectionId) {
-            $('#table-container').show();
-            table.ajax.reload();
-        } else {
-            $('#table-container').hide();
-            alert('Please select both Class and Section to view the report.');
-        }
-    });
-
-    table.clear().draw();
-});
-</script>
+    </script>
 
 @endsection
