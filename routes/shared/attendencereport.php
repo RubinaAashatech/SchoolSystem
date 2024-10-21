@@ -11,4 +11,14 @@ Route::get('/school-attendance-reports', [SchoolAttendenceReportController::clas
 Route::get('/school-attendance-reports/report', [SchoolAttendenceReportController::class, 'report'])->name('school_attendance_reports.report');
 Route::get('school-attendance-reports/data', [SchoolAttendenceReportController::class, 'getData'])->name('school_attendance_reports.data');
 
+Route::get('fetch-sections', [SchoolAttendenceReportController::class, 'fetchSections'])->name('fetch-sections');
+
+Route::get('/school-attendance-reports/search', [SchoolAttendenceReportController::class, 'search'])->name('school_attendance_reports.search');
+Route::get('/school-attendance-reports/load-sections', [SchoolAttendenceReportController::class, 'loadSections'])->name('school_attendance_reports.load_sections');
+
+
+
+
+
+
 
