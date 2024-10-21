@@ -127,8 +127,6 @@
         var formattedDate = currentDate.year + '-' + padZero(currentDate.month) + '-' + padZero(currentDate.day);
         $('#nepali-datepicker').val(formattedDate);
     
-        $('#table-container').hide();
-    
         var table = $('#attendanceTable').DataTable({
             processing: true,
             serverSide: true,
