@@ -23,7 +23,6 @@ class SchoolAttendenceReportController extends Controller
             $query->where('class_id', $selectedClass);
         })->get() : collect();
 
-        // Get current date in YYYY-MM-DD format
         $currentDate = Carbon::now()->format('Y-m-d');
 
         return view('backend.school_admin.report.index', compact('classes', 'sections', 'currentDate'));
@@ -74,8 +73,14 @@ class SchoolAttendenceReportController extends Controller
                 return $attendance->student->user->f_name . ' ' . $attendance->student->user->l_name;
             })
             ->addColumn('attendance_type', function ($attendance) {
-                return $attendance->attendance_type_id == 1 ? 'Present' : 'Absent';
-            })
+                if ($attendance->attendance_type_id == 1) {
+                    return 'Present';
+                } elseif ($attendance->attendance_type_id == 2) {
+                    return 'Absent';
+                } else {
+                    return 'Holiday';
+                }
+            })            
             ->addColumn('class', function ($attendance) {
                 return $attendance->studentSession->classg->class ?? 'N/A';
             })        

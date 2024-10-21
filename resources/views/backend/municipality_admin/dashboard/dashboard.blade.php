@@ -793,100 +793,6 @@
                 @endforeach
             </tbody>
         </table>
-
-
-
-
-
-
-        {{-- @foreach ($schoolData as $school)
-        <div>
-            <h3>{{ $school['school_name'] }}</h3>
-            <p>Total Students: {{ $school['total_students'] }}</p>
-            <p>Present Students: {{ $school['present_students'] }}</p>
-            <p>Absent Students: {{ $school['absent_students'] }}</p>
-            <p>Total Staffs: {{ $school['total_staffs'] }}</p>
-            <p>Present Staffs: {{ $school['present_staffs'] }}</p>
-            <p>Absent Staffs: {{ $school['absent_staffs'] }}</p>
-        </div>
-    @endforeach --}}
-
-
-
-
-        {{-- <div class="card mb-4">
-            <div class="card-body">
-                <form id="filterForm">
-                    @csrf
-                    <div class="row">
-                        <div class="col-md-12">
-                            <label for="datetimepicker">Date:</label>
-                            <div class="form-group">
-                                <div class="input-group date" id="datetimepicker" data-target-input="nearest">
-                                    <input id="nepali-datepicker" name="date" type="text"
-                                        class="form-control datetimepicker-input" />
-                                </div>
-                                @error('date')
-                                    <strong class="text-danger">{{ $message }}</strong>
-                                @enderror
-                            </div>
-                        </div>
-                    </div>
-            </div>
-
-
-            <div class="row">
-                <div class="col-md-12 mt-2 d-flex justify-content-end">
-                    <button type="button" class="btn btn-primary" id="searchButton">Search</button>
-                </div>
-            </div>
-
-
-            <div class="card-body">
-                <div class="school-wise-report">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Schools</th>
-                                <th>Total Students</th>
-                                <th>Present Student</th>
-                                <th>Absent Student</th>
-                                <th>Late Student</th>
-                                <th>Total Staff</th>
-                                <th>Present Staff</th>
-                                <th>Absent Staff</th>
-                                <th>Late Staff</th>
-                                <th>Holiday Staff</th>
-                                <th>Major Incidents</th>
-                                <th>ECA/CCA</th>
-                                <th>Miscellaneous</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($schools_wise_reports as $report)
-                                <tr>
-                                    <td>{{ $report['school_name'] }}</td>
-                                    <td>{{ $report['total_student'] }}</td>
-                                    <td>{{ $report['present_student'] }}</td>
-                                    <td>{{ $report['absent_student'] }}</td>
-                                    <td>{{ $report['late_student'] }}</td>
-                                    <td>{{ $report['total_staffs'] }}</td>
-                                    <td>{{ $report['present_staffs'] }}</td>
-                                    <td>{{ $report['absent_staffs'] }}</td>
-                                    <td>{{ $report['late_staffs'] }}</td>
-                                    <td>{{ $report['holiday_staffs'] }}</td>
-                                    <td>{{ $report['major_incidents'] }}</td>
-                                    <td>{{ $report['eca_cca'] }}</td>
-                                    <td>{{ $report['miscellaneous'] }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-
-
-                </div>
-            </div>
-        </div> --}}
         <div class="card mt-2">
             <div class="card-body">
                 <div class="row p-4 justify-content-around" height="300">
@@ -1124,7 +1030,6 @@ $('#saveHolidayRange').click(function() {
                 if (response.success) {
                     toastr.success(response.message);
                     $('#holidayRangeModal').modal('hide');
-                    // Optionally, update UI or refresh data
                 } else {
                     toastr.error(response.message || 'Error marking holiday range.');
                 }

@@ -73,7 +73,6 @@ class StudentProfileController extends Controller
         $total = $students->count();
         $lastPage = ceil($total / $perPage);
 
-        // If search term is provided, we'll display all results without pagination
         if ($request->filled('search_term')) {
             $perPage = $total;
             $currentPage = 1;

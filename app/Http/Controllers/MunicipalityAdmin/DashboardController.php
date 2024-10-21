@@ -373,7 +373,6 @@ class DashboardController extends Controller
         ]);
     }
 
-
     public function markHolidayRange(Request $request)
     {
         try {
@@ -382,7 +381,9 @@ class DashboardController extends Controller
             $reason = $request->input('reason');
             $schoolId = session('school_id');
             $municipalityId = session('municipality_id');
+            
             DB::beginTransaction();
+            
             // Iterate through each date in the range
             for ($date = $startDate; $date->lte($endDate); $date->addDay()) {
                 $query = StudentAttendance::whereHas('studentSession', function ($query) use ($schoolId, $municipalityId) {
@@ -396,43 +397,42 @@ class DashboardController extends Controller
                         }
                     });
                 })->where('date', $date->toDateString());
+    
                 // Update existing attendance records to holiday
                 $updatedCount = $query->update(['attendance_type_id' => 4, 'remarks' => $reason]);
-                // Insert new attendance records for students without existing records for the date
-                $studentsQuery = Student::query();
+    
+                // Fetch student sessions instead of students
+                $studentSessionsQuery = StudentSession::query();
+    
+                // Apply filtering based on school or municipality
                 if ($schoolId) {
-                    $studentsQuery->where('school_id', $schoolId);
+                    $studentSessionsQuery->where('school_id', $schoolId);
                 } elseif ($municipalityId) {
-                    $studentsQuery->whereHas('school', function ($query) use ($municipalityId) {
+                    $studentSessionsQuery->whereHas('student.school', function ($query) use ($municipalityId) {
                         $query->where('municipality_id', $municipalityId);
                     });
                 }
-                $students = $studentsQuery->get();
-                foreach ($students as $student) {
-                    $studentSessions = $student->studentSessions()
-                        ->when($schoolId, function ($query) use ($schoolId) {
-                            return $query->where('school_id', $schoolId);
-                        })
-                        ->pluck('id');
-                    if ($studentSessions->isEmpty()) {
-                        continue; // Skip if no student sessions found
-                    }
-                    foreach ($studentSessions as $studentSessionId) {
-                        $existingAttendance = StudentAttendance::where('student_session_id', $studentSessionId)
-                            ->where('date', $date->toDateString())
-                            ->first();
-                        if (!$existingAttendance) {
-                            // Insert the new record with student_session_id
-                            StudentAttendance::create([
-                                'student_session_id' => $studentSessionId,  // Ensure this is passed
-                                'date' => $date->toDateString(),
-                                'attendance_type_id' => 4, // Assuming 4 is for holiday
-                                'remarks' => $reason
-                            ]);
-                        }
+    
+                $studentSessions = $studentSessionsQuery->get();
+    
+                foreach ($studentSessions as $studentSession) {
+                    // Check if attendance already exists for this session and date
+                    $existingAttendance = StudentAttendance::where('student_session_id', $studentSession->id)
+                        ->where('date', $date->toDateString())
+                        ->first();
+    
+                    if (!$existingAttendance) {
+                        // Insert the new record with student_session_id
+                        StudentAttendance::create([
+                            'student_session_id' => $studentSession->id,
+                            'date' => $date->toDateString(),
+                            'attendance_type_id' => 4, 
+                            'remarks' => $reason
+                        ]);
                     }
                 }
             }
+    
             DB::commit();
             return response()->json(['success' => true, 'message' => "Student attendances updated/inserted successfully for holiday range."]);
         } catch (\Exception $e) {
@@ -440,6 +440,7 @@ class DashboardController extends Controller
             return response()->json(['success' => false, 'message' => 'Failed to update/insert student attendances for holiday range: ' . $e->getMessage()]);
         }
     }
+    
 }
     
 
