@@ -180,15 +180,16 @@ class DashboardController extends Controller
 }
 
 public function schoolDashboard() {
-    // Get the current Nepali date
-    $nepaliDateToday = LaravelNepaliDate::from(Carbon::now()->toDateString())->toNepaliDate();
-    // Check if any date is marked as a holiday in the StudentAttendance table
-    $isHoliday = StudentAttendance::where('attendance_type_id', 4)
+    // Get today's Nepali date
+    $currentDate = LaravelNepaliDate::from(Carbon::now()->toDateString())->toNepaliDate();
+    // Check if today is marked as a holiday in the StudentAttendance table
+    $isHoliday = StudentAttendance::where('date', $currentDate)
+        ->where('attendance_type_id', 4)
         ->exists();
     // Return the dashboard view with the holiday info
     return view('backend.school_admin.dashboard.dashboard', [
         'isHoliday' => $isHoliday,
-        'currentDate' => $nepaliDateToday,
+        'currentDate' => $currentDate
     ]);
 }
 
@@ -334,7 +335,6 @@ private function getClassesWithIncompleteAttendance() {
 
     return $classesWithIncompleteAttendance;
 }
-
 
 
 

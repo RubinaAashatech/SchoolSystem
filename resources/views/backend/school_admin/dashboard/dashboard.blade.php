@@ -427,6 +427,12 @@
         </div> --}}
 
 
+        <div class="mt-4">
+            @if ($isHoliday)
+                    <strong style="color: #FF0000; font-size: 16px;">Holiday Alert - Today is a holiday !!!</strong>
+            @endif
+        </div>
+
         @if(!$classesWithIncompleteAttendance->isEmpty())
         <div class="card mt-4">
             <div class="card-header bg-warning text-white">
@@ -659,29 +665,6 @@
                 </a>
             </div>
 
-            <div class="col-xl-3 mb-50">
-                <div class="bg-white box-shadow border-radius-10 height-100-p widget-style1">
-                    <div class="d-flex flex-wrap align-items-center">
-                        <div class="circle-icon">
-                            <div class="icon border-radius-100 font-24">
-                                <i class="fa-solid fa-calendar-day"></i>
-                            </div>
-                        </div>
-                        <div class="widget-data">
-                            @if ($isHoliday)
-                            <div class="">
-                                <strong>Holiday Alert - Today is a holiday !!! </strong>
-                            </div>
-                        @else
-                            <div class="alert alert-info">
-                                No holidays today.
-                            </div>
-                        @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-          
             {{-- <div class="col-xl-3 mb-50">
                 <div class="bg-white box-shadow border-radius-10 height-100-p widget-style1">
                     <div class="d-flex flex-wrap align-items-center">

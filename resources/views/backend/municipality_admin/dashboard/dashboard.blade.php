@@ -456,6 +456,15 @@
 
         {{-- For the material Design in the dashboard --}}
 
+        <div class="row mb-3">
+            <div class="col-12 ">
+                <button class="btn btn-primary" onclick="$('#holidayRangeModal').modal('show')">
+                    <i class="fa-solid fa-calendar-plus me-2"></i>
+                    Mark Holiday
+                </button>
+            </div>
+        </div>
+
 
         <div class="row">
 
@@ -712,21 +721,6 @@
                 </div>
             </div>      
          
-            <div class="col-xl-4 mb-50">
-                <div class="bg-white box-shadow border-radius-10 height-100-p widget-style1" style="cursor: pointer;" onclick="$('#holidayRangeModal').modal('show')">
-                    <div class="d-flex flex-wrap align-items-center">
-                        <div class="circle-icon">
-                            <div class="icon border-radius-100 font-24 text-blue">
-                                <i class="fa-solid fa-calendar-plus"></i>
-                            </div>
-                        </div>
-                        <div class="widget-data">
-                            <div class="weight-800 font-18">Mark Holiday</div>
-                            <div class="weight-500">Click to mark a holiday</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
             <div class="modal fade" id="holidayRangeModal" tabindex="-1" role="dialog" aria-labelledby="holidayRangeModalLabel" aria-hidden="true">
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
@@ -1050,34 +1044,34 @@
         $(document).ready(function() {
             updateAttendanceStatus();
         });
-   // Event listener for save button click
-$('#saveHolidayButton').click(function(e) {
-    e.preventDefault();
-    // Send AJAX request to mark all schools as holiday
-    $.ajax({
+    // Event listener for save button click
+    $('#saveHolidayButton').click(function(e) {
+      e.preventDefault();
+      // Send AJAX request to mark all schools as holiday
+      $.ajax({
         url: '', // Define this route in your web.php
         type: 'POST',
         data: {
-            _token: '{{ csrf_token() }}', // Include CSRF token for Laravel
-            // Include other data if needed (e.g., holiday date, etc.)
+          _token: '{{ csrf_token() }}', // Include CSRF token for Laravel
+          // Include other data if needed (e.g., holiday date, etc.)
         },
         success: function(response) {
-            // Close the modal
-            $('#holidayModal').modal('hide');
-            // Show a success message or update the UI to reflect changes
-            alert('All schools have been marked as holiday successfully!');
-            // Optionally, you can refresh the table or list of schools here to reflect changes.
+          // Close the modal
+          $('#holidayModal').modal('hide');
+          // Show a success message or update the UI to reflect changes
+          alert('All schools have been marked as holiday successfully!');
+          // Optionally, you can refresh the table or list of schools here to reflect changes.
         },
         error: function(xhr, status, error) {
-            // Handle any errors
-            console.log(xhr.responseText);
-            alert('Something went wrong. Please try again.');
+          // Handle any errors
+          console.log(xhr.responseText);
+          alert('Something went wrong. Please try again.');
         }
+      });
     });
-});
-// Initialize date pickers for the holiday range modal
-$('#holidayStartDate, #holidayEndDate').nepaliDatePicker();
-$("#holidayStartDate").nepaliDatePicker({
+    // Initialize date pickers for the holiday range modal
+    $('#holidayStartDate, #holidayEndDate').nepaliDatePicker()
+    $("#holidayStartDate").nepaliDatePicker({
     container: "#holidayRangeModal",
     dateFormat: "YYYY-MM-DD",
     ndpYear: true,
@@ -1106,15 +1100,11 @@ $('#saveHolidayRange').click(function() {
     var startDate = $('#holidayStartDate').val();
     var endDate = $('#holidayEndDate').val();
     var reason = $('#holidayReason').val();
-    if (!startDate) {
-        toastr.warning('Please select the start date.');
+    if (!startDate || !endDate) {
+        toastr.warning('Please select both start and end dates.');
         return;
     }
-    // Ensure the confirmation message includes proper endDate if provided
-    var confirmationMessage = endDate
-        ? 'Are you sure you want to mark holidays from ' + startDate + ' to ' + endDate + '?'
-        : 'Are you sure you want to mark ' + startDate + ' as a holiday?';
-    if (confirm(confirmationMessage)) {
+    if (confirm('Are you sure you want to mark holidays from ' + startDate + ' to ' + endDate + '?')) {
         $.ajax({
             url: '{{ route("admin.student.mark-holiday-range") }}',
             type: 'POST',
@@ -1122,8 +1112,8 @@ $('#saveHolidayRange').click(function() {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
             data: {
-                date: startDate, // start_date changed to 'date' for consistency with controller
-                end_date: endDate || null, // Send null if endDate is empty
+                start_date: startDate,
+                end_date: endDate,
                 reason: reason
             },
             success: function(response) {
